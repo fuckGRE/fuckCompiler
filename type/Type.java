@@ -53,10 +53,13 @@ public abstract class Type {
         return false;
     }
 
+<<<<<<< HEAD
     public boolean isUserType() {
         return false;
     }
 
+=======
+>>>>>>> master
     public boolean isFunction() {
         return false;
     }

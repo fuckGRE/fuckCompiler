@@ -1,6 +1,9 @@
 package compiler;
 
+<<<<<<< HEAD
 import asm.IntegerLiteral;
+=======
+>>>>>>> master
 import ast.*;
 import entity.DefinedVariable;
 
@@ -57,12 +60,15 @@ abstract public class CompilerVisitor implements ASTVisitor<Void, Void> {
         return null;
     }
 
+<<<<<<< HEAD
     public Void visit(SwitchNode node) {
         visitExpr(node.cond());
         visitStmts(node.cases());
         return null;
     }
 
+=======
+>>>>>>> master
     public Void visit(CaseNode node) {
         visitExprs(node.values());
         visitStmt(node.body());
@@ -148,7 +154,10 @@ abstract public class CompilerVisitor implements ASTVisitor<Void, Void> {
         return null;
     }
 
+<<<<<<< HEAD
     //TODO: check whether nodes are needed
+=======
+>>>>>>> master
     public Void visit(PrefixOpNode node) {
         visitExpr(node.expr());
         return null;

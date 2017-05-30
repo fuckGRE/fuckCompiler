@@ -122,12 +122,15 @@ public class TypeChecker extends CompilerVisitor {
         mustBeScalar(cond, "condition expression");
     }
 
+<<<<<<< HEAD
     public Void visit(SwitchNode node) {
         super.visit(node);
         mustBeScalar(node.cond(), "condition expression");
         return null;
     }
 
+=======
+>>>>>>> master
     public Void visit(ReturnNode node) {
         super.visit(node);
         if (currentFunction.isVoid()) {

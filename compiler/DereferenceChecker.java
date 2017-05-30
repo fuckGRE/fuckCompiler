@@ -3,7 +3,10 @@ package compiler;
 import ast.*;
 import entity.DefinedFunction;
 import entity.DefinedVariable;
+<<<<<<< HEAD
 import entity.LocalScope;
+=======
+>>>>>>> master
 import exception.SemanticError;
 import exception.SemanticException;
 import type.CompositeType;
@@ -99,7 +102,10 @@ public class DereferenceChecker extends CompilerVisitor {
         }
     }
 
+<<<<<<< HEAD
     //TODO: what are prefix and suffixOpNode, ArefNode
+=======
+>>>>>>> master
     public Void visit(PrefixOpNode node) {
         super.visit(node);
         if (!node.expr().isAssignable()) {
@@ -217,10 +223,13 @@ public class DereferenceChecker extends CompilerVisitor {
         semanticError(loc, "dereferencing non-pointer expression");
     }
 
+<<<<<<< HEAD
     private void semanticError(Node n, String msg) {
         semanticError(n.location(), msg);
     }
 
+=======
+>>>>>>> master
     private void semanticError(Location loc, String msg) {
         errorHandler.error(loc, msg);
         throw new SemanticError("invalid expression");

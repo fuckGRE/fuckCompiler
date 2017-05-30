@@ -11,6 +11,7 @@ public class TypeTable {
         return newTable(1, 2, 4, 4, 4);
     }
 
+<<<<<<< HEAD
     static public TypeTable ilp64() {
         return newTable(1, 2, 8, 8, 8);
     }
@@ -23,6 +24,8 @@ public class TypeTable {
         return newTable(1, 2, 4, 4, 8);
     }
 
+=======
+>>>>>>> master
     static private TypeTable newTable(int charsize, int shortsize,
                                       int intsize, int longsize, int ptrsize) {
         TypeTable table = new TypeTable(intsize, longsize, ptrsize);
@@ -72,6 +75,7 @@ public class TypeTable {
     public Type get(TypeRef ref) {
         Type type = table.get(ref);
         if (type == null) {
+<<<<<<< HEAD
             if (ref instanceof UserTypeRef) {
                 // If unregistered UserType is used in program, it causes
                 // parse error instead of semantic error.  So we do not
@@ -79,6 +83,9 @@ public class TypeTable {
                 UserTypeRef uref = (UserTypeRef) ref;
                 throw new Error("undefined type: " + uref.name());
             } else if (ref instanceof PointerTypeRef) {
+=======
+            if (ref instanceof PointerTypeRef) {
+>>>>>>> master
                 PointerTypeRef pref = (PointerTypeRef) ref;
                 Type t = new PointerType(pointerSize, get(pref.baseType()));
                 table.put(pref, t);
@@ -108,6 +115,7 @@ public class TypeTable {
         return t.isArray() ? pointerTo(t.baseType()) : t;
     }
 
+<<<<<<< HEAD
     public int intSize() {
         return this.intSize;
     }
@@ -128,6 +136,8 @@ public class TypeTable {
         return get(ptrDiffTypeRef());
     }
 
+=======
+>>>>>>> master
     // returns a IntegerTypeRef whose size is equals to pointer.
     public TypeRef ptrDiffTypeRef() {
         return new IntegerTypeRef(ptrDiffTypeName());
@@ -172,6 +182,7 @@ public class TypeTable {
         return (IntegerType) table.get(IntegerTypeRef.longRef());
     }
 
+<<<<<<< HEAD
     public IntegerType unsignedChar() {
         return (IntegerType) table.get(IntegerTypeRef.ucharRef());
     }
@@ -180,6 +191,8 @@ public class TypeTable {
         return (IntegerType) table.get(IntegerTypeRef.ushortRef());
     }
 
+=======
+>>>>>>> master
     public IntegerType unsignedInt() {
         return (IntegerType) table.get(IntegerTypeRef.uintRef());
     }
@@ -259,9 +272,12 @@ public class TypeTable {
             } else if (t instanceof ArrayType) {
                 ArrayType at = (ArrayType) t;
                 _checkRecursiveDefinition(at.baseType(), marks, h);
+<<<<<<< HEAD
             } else if (t instanceof UserType) {
                 UserType ut = (UserType) t;
                 _checkRecursiveDefinition(ut.realType(), marks, h);
+=======
+>>>>>>> master
             }
             marks.put(t, checked);
         }

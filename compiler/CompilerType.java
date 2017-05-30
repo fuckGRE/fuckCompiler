@@ -11,16 +11,24 @@ enum CompilerType {
     CheckSyntax("--check-syntax"),
     ShowTokens("--show-tokens"),
     ShowAST("--show-ast"),
+<<<<<<< HEAD
     ShowStmt("--show-stmt"),
     ShowExpr("--show-expr"),
     ShowSemantic("--show-semantic"),
     ShowReference("--show-reference"),
     ShowIR("--show-ir"),
     Compile("-C");
+=======
+    ShowSemantic("--show-semantic"),
+    ShowReference("--show-reference"),
+    ShowIR("--show-ir"),
+    ShowHelp("--help");
+>>>>>>> master
 
     static private Map<String, CompilerType> types;
 
     static {
+<<<<<<< HEAD
         types = new HashMap<String, CompilerType>();
         types.put("--check-syntax", CheckSyntax);
         types.put("--show-tokens", ShowTokens);
@@ -30,6 +38,16 @@ enum CompilerType {
         types.put("--show-semantic", ShowSemantic);
         types.put("--show-reference", ShowReference);
         types.put("--show-ir", ShowIR);
+=======
+        types = new HashMap<>();
+        types.put("--check-syntax", CheckSyntax);
+        types.put("--show-tokens", ShowTokens);
+        types.put("--show-ast", ShowAST);
+        types.put("--show-semantic", ShowSemantic);
+        types.put("--show-reference", ShowReference);
+        types.put("--show-ir", ShowIR);
+        types.put("--help", ShowHelp);
+>>>>>>> master
     }
 
     static public boolean isTypeOption(String opt) {

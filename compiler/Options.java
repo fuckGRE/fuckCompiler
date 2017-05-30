@@ -23,7 +23,11 @@ public class Options {
     private CompilerType compilerType;
     private LibraryLoader libraryLoader = new LibraryLoader();
     private boolean debug = false;
+<<<<<<< HEAD
     private List<LoadArg> loadArgList;
+=======
+    private List<LoadOpt> loadOptList;
+>>>>>>> master
     private List<SourceFile> sourceFileList;
 
     CompilerType compilerType() {
@@ -45,6 +49,7 @@ public class Options {
     TypeTable typeTable() {
         return TypeTable.ilp32();
     }
+<<<<<<< HEAD
 
     List<String> loadArgs() {
         List<String> res = new ArrayList<String>();
@@ -54,11 +59,18 @@ public class Options {
         return res;
     }
 
+=======
+    
+>>>>>>> master
 
     void parseArgs(String[] inputArgs) {
         sourceFileList = new ArrayList<>();
         ListIterator<String> args = Arrays.asList(inputArgs).listIterator();
+<<<<<<< HEAD
         loadArgList = new ArrayList<>();
+=======
+        loadOptList = new ArrayList<>();
+>>>>>>> master
         while (args.hasNext()) {
             String arg = args.next();
             if (arg.equals("--")) {
@@ -74,7 +86,14 @@ public class Options {
                     libraryLoader.addLoadPath(getOptArg(arg, args));
                 } else if (arg.startsWith("-L")) {
                     addLoadArg("-L" + getOptArg(arg, args));
+<<<<<<< HEAD
                 } else {
+=======
+                } else if (arg.startsWith("--help")) {
+                    printOptions(System.out);
+                }
+                else {
+>>>>>>> master
                     parseError("Unknown option: " + arg);
                 }
             } else {
@@ -84,7 +103,11 @@ public class Options {
     }
 
     private void addLoadArg(String arg) {
+<<<<<<< HEAD
         loadArgList.add(new LoadOpt(arg));
+=======
+        loadOptList.add(new LoadOpt(arg));
+>>>>>>> master
     }
 
     private String getOptArg(String opt, ListIterator<String> args) {

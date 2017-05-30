@@ -5,6 +5,7 @@ import java.io.File;
 /**
  * Created by yangj on 2017/5/29.
  */
+<<<<<<< HEAD
 public class SourceFile implements LoadArg {
     static final String SOURCE = ".cb";
 
@@ -20,6 +21,16 @@ public class SourceFile implements LoadArg {
         return true;
     }
 
+=======
+public class SourceFile {
+
+    private String currentName;
+
+    SourceFile(String name) {
+        this.currentName = name;
+    }
+
+>>>>>>> master
     public String toString() {
         return currentName;
     }
@@ -27,6 +38,7 @@ public class SourceFile implements LoadArg {
     String path() {
         return currentName;
     }
+<<<<<<< HEAD
 
     String getCurrentName() {
         return currentName;
@@ -40,4 +52,6 @@ public class SourceFile implements LoadArg {
         return new File(path).getName();
     }
 
+=======
+>>>>>>> master
 }

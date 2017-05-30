@@ -37,8 +37,14 @@ public class LocalResolver extends CompilerVisitor {
         for (Entity decla : ast.declarations()) {
             toplevelScope.declareEntity(decla);
         }
+<<<<<<< HEAD
         for (Entity defin : ast.definitions()) {
             toplevelScope.declareEntity(defin);
+=======
+
+        for (Entity defin : ast.definitions()) {
+            toplevelScope.defineEntity(defin);
+>>>>>>> master
         }
 
         resolveGlobalVarInitializers(ast.definedVariables());

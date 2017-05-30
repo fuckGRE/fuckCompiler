@@ -68,12 +68,15 @@ public class TypeResolver extends CompilerVisitor
         }
     }
 
+<<<<<<< HEAD
     public Void visit(TypedefNode typedefNode) {
         bindType(typedefNode.typeNode());
         bindType(typedefNode.realTypeNode());
         return null;
     }
 
+=======
+>>>>>>> master
     public Void visit(DefinedVariable variable) {
         bindType(variable.typeNode());
         if (variable.hasInitializer()) {
