@@ -25,8 +25,6 @@ public class AST extends Node {
     public List<TypeDefinition> types() {
         List<TypeDefinition> result = new ArrayList<TypeDefinition>();
         result.addAll(declarations.defstructs());
-        result.addAll(declarations.defunions());
-        result.addAll(declarations.typedefs());
         return result;
     }
 
