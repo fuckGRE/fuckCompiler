@@ -1,0 +1,961 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<TITLE>BNF for FuckC.jj</TITLE>
+</HEAD>
+<BODY>
+<H1 ALIGN=CENTER>BNF for FuckC.jj</H1>
+<H2 ALIGN=CENTER>TOKENS</H2>
+<TABLE>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// 不生成token的扫描
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; SKIP : {
+" "
+| "\t"
+| "\n"
+| "\r"
+| &lt;"//" (~["\n","\r"])* ("\n" | "\r" | "\r\n")?&gt; : {
+| &lt;"/*" (~["*"])* ("*")+ (~["/","*"] (~["*"])* ("*")+)* "/"&gt; : {
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; TOKEN : {
+&lt;INTEGER_LITERAL: &lt;DECIMAL_LITERAL&gt; (["u","U","l","L"])? | &lt;HEX_LITERAL&gt; (["u","U","l","L"])? | &lt;OCTAL_LITERAL&gt; (["u","U","l","L"])?&gt;
+| &lt;#DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])*&gt;
+| &lt;#HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+&gt;
+| &lt;#OCTAL_LITERAL: "0" (["0"-"7"])*&gt;
+| &lt;FLOATING_POINT_LITERAL: (["0"-"9"])+ "." (["0"-"9"])* (&lt;EXPONENT&gt;)? (["f","F","d","D"])? | "." (["0"-"9"])+ (&lt;EXPONENT&gt;)? (["f","F","d","D"])? | (["0"-"9"])+ &lt;EXPONENT&gt; (["f","F","d","D"])? | (["0"-"9"])+ (&lt;EXPONENT&gt;)? ["f","F","d","D"]&gt;
+| &lt;#EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+&gt;
+| &lt;CHARACTER_LITERAL: "\'" (~["\'","\\","\n","\r"] | "\\" ["n","t","b","r","f","\\","\'","\""]) "\'"&gt;
+| &lt;STRING_LITERAL: "\"" (~["\"","\\","\n","\r"] | "\\" (["n","t","b","r","f","\\","\'","\""] | ["\n","\r"] | "\r\n"))* "\""&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//扫描保留字
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; TOKEN : {
+&lt;AUTO: "auto"&gt;
+| &lt;REGISTER: "register"&gt;
+| &lt;STATIC: "static"&gt;
+| &lt;EXTERN: "extern"&gt;
+| &lt;TYPEDEF: "typedef"&gt;
+| &lt;VOID: "void"&gt;
+| &lt;CHAR: "char"&gt;
+| &lt;SHORT: "short"&gt;
+| &lt;INT: "int"&gt;
+| &lt;LONG: "long"&gt;
+| &lt;FLOAT: "float"&gt;
+| &lt;DOUBLE: "double"&gt;
+| &lt;SIGNED: "signed"&gt;
+| &lt;UNSIGNED: "unsigned"&gt;
+| &lt;CONST: "const"&gt;
+| &lt;VOLATILE: "volatile"&gt;
+| &lt;CASE: "case"&gt;
+| &lt;DFLT: "default"&gt;
+| &lt;IF: "if"&gt;
+| &lt;ELSE: "else"&gt;
+| &lt;SWITCH: "switch"&gt;
+| &lt;WHILE: "while"&gt;
+| &lt;FOR: "for"&gt;
+| &lt;DO: "do"&gt;
+| &lt;GOTO: "goto"&gt;
+| &lt;CONTINUE: "continue"&gt;
+| &lt;BREAK: "break"&gt;
+| &lt;RETURN: "return"&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//扫描标识符
+//神坑:必须在定义在保留字后面,因为javacc有最长匹配原则
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; TOKEN : {
+&lt;IDENTIFIER: ["a"-"z","A"-"Z","_"] (["a"-"z","A"-"Z","_","0"-"9"])*&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+</TABLE>
+<H2 ALIGN=CENTER>NON-TERMINALS</H2>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>Start</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod1">Start</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod2">top_unit</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Top unit
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>top_unit</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod2">top_unit</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod3">ex_decl</A> )+ &lt;EOF&gt;</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Ex Declaration
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>ex_decl</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod3">ex_decl</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod4">fun_def</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Function definition
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>fun_def</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod4">fun_def</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod5">type_specifiers</A> &lt;IDENTIFIER&gt; "(" ( <A HREF="#prod6">param_type_list</A> )? ")" <A HREF="#prod7">compound_stm</A> )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Parameter type list
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>param_type_list</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod6">param_type_list</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod8">param_list</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Parameter List
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>param_list</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod8">param_list</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod9">param_decl</A> ( "," <A HREF="#prod9">param_decl</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Parameter declaration
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>param_decl</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod9">param_decl</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod5">type_specifiers</A> <A HREF="#prod10">decl</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Compound statement
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>compound_stm</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod7">compound_stm</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"{" ( <A HREF="#prod11">decl_list</A> )? ( <A HREF="#prod12">stmt_list</A> )? "}"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//statement list
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>stmt_list</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod12">stmt_list</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod13">stmt</A> )+</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Statement
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod13">stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod14">case_default_stmt</A> | <A HREF="#prod15">expr_stmt</A> | <A HREF="#prod7">compound_stm</A> | <A HREF="#prod16">if_switch_stmt</A> | <A HREF="#prod17">while_for_stmt</A> | <A HREF="#prod18">jump_stmt</A> )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//if and switch
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>if_switch_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod16">if_switch_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;IF&gt; "(" <A HREF="#prod19">expr</A> ")" <A HREF="#prod13">stmt</A> ( &lt;ELSE&gt; <A HREF="#prod13">stmt</A> )? | &lt;SWITCH&gt; "(" <A HREF="#prod19">expr</A> ")" <A HREF="#prod13">stmt</A> )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//case && default
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>case_default_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod14">case_default_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;IDENTIFIER&gt; ":" <A HREF="#prod13">stmt</A> | &lt;CASE&gt; ( &lt;INTEGER_LITERAL&gt; | &lt;CHARACTER_LITERAL&gt; ) ":" <A HREF="#prod13">stmt</A> | &lt;DFLT&gt; ":" <A HREF="#prod13">stmt</A> )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//while , do…while, for
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>while_for_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod17">while_for_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;WHILE&gt; "(" <A HREF="#prod19">expr</A> ")" <A HREF="#prod13">stmt</A> | &lt;DO&gt; <A HREF="#prod13">stmt</A> &lt;WHILE&gt; "(" <A HREF="#prod19">expr</A> ")" ";" | &lt;FOR&gt; "(" ( <A HREF="#prod19">expr</A> )? ";" ( <A HREF="#prod19">expr</A> )? ";" ( <A HREF="#prod19">expr</A> )? ")" <A HREF="#prod13">stmt</A> )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//goto & continue & return & break
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>jump_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod18">jump_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;GOTO&gt; &lt;IDENTIFIER&gt; ";" | &lt;CONTINUE&gt; ";" | &lt;BREAK&gt; ";" | &lt;RETURN&gt; ( <A HREF="#prod19">expr</A> )? ";" )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//constant expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>constant_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod20">constant_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod21">cond_expr</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//expression statement
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod15">expr_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod19">expr</A> )? ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod19">expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod22">assign_expr</A> ( "," <A HREF="#prod22">assign_expr</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Declation list
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>decl_list</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod11">decl_list</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod23">decls</A> )+</TD>
+</TR>
+</TABLE>
+<HR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>decls</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod23">decls</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod24">decl_specifiers</A> <A HREF="#prod25">init_decl_list</A> ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Declation specifiers
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>decl_specifiers</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod24">decl_specifiers</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod26">storage_specifiers</A> ( <A HREF="#prod24">decl_specifiers</A> )? | <A HREF="#prod27">type_modifiers</A> ( <A HREF="#prod24">decl_specifiers</A> )? | <A HREF="#prod5">type_specifiers</A> ( <A HREF="#prod24">decl_specifiers</A> )? | <A HREF="#prod28">type_qualifiers</A> ( <A HREF="#prod24">decl_specifiers</A> )? )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Storage class specifiers
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>storage_specifiers</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod26">storage_specifiers</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;AUTO&gt; | &lt;REGISTER&gt; | &lt;STATIC&gt; | &lt;EXTERN&gt; )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Type modifiers
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>type_modifiers</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod27">type_modifiers</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;SHORT&gt; | &lt;LONG&gt; | &lt;SIGNED&gt; | &lt;UNSIGNED&gt; )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Type specifiers
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>type_specifiers</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod5">type_specifiers</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;VOID&gt; | &lt;CHAR&gt; | &lt;INT&gt; | &lt;FLOAT&gt; | &lt;DOUBLE&gt; )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Type Qualifiers
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>type_qualifiers</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod28">type_qualifiers</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;CONST&gt; | &lt;VOLATILE&gt; )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Init declarator list
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>init_decl_list</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod25">init_decl_list</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod29">init_decl</A> ( "," <A HREF="#prod29">init_decl</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Init declarator
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>init_decl</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod29">init_decl</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod10">decl</A> ( "=" <A HREF="#prod30">init</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Declarator
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>decl</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod10">decl</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod31">ptr</A> )? <A HREF="#prod32">direct_decl</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Direct Declarator
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>direct_decl</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod32">direct_decl</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;IDENTIFIER&gt; | "(" <A HREF="#prod10">decl</A> ")" ) ( "[" &lt;INTEGER_LITERAL&gt; "]" )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Pointer
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>ptr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod31">ptr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"*" ( <A HREF="#prod31">ptr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Initializer
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>init</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod30">init</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod22">assign_expr</A> )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Initializer list
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>init_list</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod33">init_list</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod30">init</A> ( "," <A HREF="#prod30">init</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Assignment Expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>assign_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod22">assign_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod34">unary_expr</A> <A HREF="#prod35">assign_operator</A> <A HREF="#prod22">assign_expr</A> | <A HREF="#prod21">cond_expr</A> )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Assignment operator
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>assign_operator</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod35">assign_operator</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "&lt;&lt;=" | "&gt;&gt;=" | "&amp;=" | "^=" | "|=" )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Unary expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>unary_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod34">unary_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod36">postfix_expr</A> | "++" <A HREF="#prod34">unary_expr</A> | "--" <A HREF="#prod34">unary_expr</A> | "-" <A HREF="#prod34">unary_expr</A> | "&amp;" <A HREF="#prod34">unary_expr</A> | "*" <A HREF="#prod34">unary_expr</A> | "~" <A HREF="#prod34">unary_expr</A> | "!" <A HREF="#prod34">unary_expr</A> )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Postfix expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>postfix_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod36">postfix_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod37">prefix_expr</A> ( "[" <A HREF="#prod19">expr</A> "]" | "++" | "--" )* )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//prefix expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>prefix_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod37">prefix_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;IDENTIFIER&gt; | <A HREF="#prod38">constant</A> | "(" <A HREF="#prod19">expr</A> ")" )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//conditional expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>cond_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod21">cond_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod39">logical_or_expr</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//logical or expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>logical_or_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod39">logical_or_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod40">logical_and_expr</A> ( "||" <A HREF="#prod39">logical_or_expr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//logical and expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>logical_and_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod40">logical_and_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod41">Inclusive_or_expr</A> ( "&amp;&amp;" <A HREF="#prod40">logical_and_expr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Inclusive Or expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>Inclusive_or_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod41">Inclusive_or_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod42">exclusive_or_expr</A> ( "|" <A HREF="#prod41">Inclusive_or_expr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Exclusive Or expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>exclusive_or_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod42">exclusive_or_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod43">and_expr</A> ( "^" <A HREF="#prod42">exclusive_or_expr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//And expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>and_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod43">and_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod44">equal_expr</A> ( "&amp;" <A HREF="#prod43">and_expr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//equality expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>equal_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod44">equal_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod45">relation_expr</A> ( ( "==" | "!=" ) <A HREF="#prod44">equal_expr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//Relational expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>relation_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod45">relation_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod46">shift_expr</A> ( ( "&lt;" | "&gt;" | "&lt;=" | "&gt;=" ) <A HREF="#prod45">relation_expr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//shift expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>shift_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod46">shift_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod47">additive_expr</A> ( ( "&lt;&lt;" | "&gt;&gt;" ) <A HREF="#prod46">shift_expr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//additive expression
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>additive_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod47">additive_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod48">multiplicative_expr</A> ( ( "+" | "-" ) <A HREF="#prod47">additive_expr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>multiplicative_expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod48">multiplicative_expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod34">unary_expr</A> ( ( "*" | "/" | "%" ) <A HREF="#prod48">multiplicative_expr</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//constant
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>constant</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod38">constant</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;INTEGER_LITERAL&gt; | &lt;FLOATING_POINT_LITERAL&gt; | &lt;CHARACTER_LITERAL&gt; | &lt;STRING_LITERAL&gt; )</TD>
+</TR>
+</TABLE>
+<HR>
+</BODY>
+</HTML>

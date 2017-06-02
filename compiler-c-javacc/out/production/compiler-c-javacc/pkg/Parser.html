@@ -1,0 +1,1669 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<TITLE>BNF for Parser.jj</TITLE>
+</HEAD>
+<BODY>
+<H1 ALIGN=CENTER>BNF for Parser.jj</H1>
+<H2 ALIGN=CENTER>TOKENS</H2>
+<TABLE>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+/*
+ * Lexical Rules
+ */
+
+// linear-white-spaces
+// 跳过空白符
+// #@@range/lex_spaces{
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; SPECIAL : {
+&lt;SPACES: ([" ","\t","\n","\r","\f"])+&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// block comment
+// #@@range/lex_block_comment{
+// 将SKIP换为MORE,在块注释的中途遇到文件结尾时就可以正确提示错误了。
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; MORE : {
+"/*" : IN_BLOCK_COMMENT
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//匹配后迁移到IN_BLOCK_COMMENT状态
+//只有处于IN_BLOCK_COMMENT状态，下面两个规则才有效
+//而其他规则 在这个状态下将变得无效
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;IN_BLOCK_COMMENT&gt; MORE : {
+&lt;~[]&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//匹配任意一个字符
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;IN_BLOCK_COMMENT&gt; SPECIAL : {
+&lt;BLOCK_COMMENT: "*/"&gt; : DEFAULT
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//匹配*/的话，就回到最初的状态
+// #@@}
+
+// line comment
+// 跳过行注释
+// #@@range/lex_line_comment{
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; SPECIAL : {
+&lt;LINE_COMMENT: "//" (~["\n","\r"])* ("\n" | "\r\n" | "\r")?&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// reserved words
+// 扫描关键字
+// #@@range/lex_reswords{
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; TOKEN : {
+&lt;VOID: "void"&gt;
+| &lt;CHAR: "char"&gt;
+| &lt;SHORT: "short"&gt;
+| &lt;INT: "int"&gt;
+| &lt;LONG: "long"&gt;
+| &lt;STRUCT: "struct"&gt;
+| &lt;UNION: "union"&gt;
+| &lt;ENUM: "enum"&gt;
+| &lt;STATIC: "static"&gt;
+| &lt;CONST: "const"&gt;
+| &lt;SIGNED: "signed"&gt;
+| &lt;UNSIGNED: "unsigned"&gt;
+| &lt;IF: "if"&gt;
+| &lt;ELSE: "else"&gt;
+| &lt;SWITCH: "switch"&gt;
+| &lt;CASE: "case"&gt;
+| &lt;DEFAULT_: "default"&gt;
+| &lt;WHILE: "while"&gt;
+| &lt;DO: "do"&gt;
+| &lt;FOR: "for"&gt;
+| &lt;RETURN: "return"&gt;
+| &lt;BREAK: "break"&gt;
+| &lt;CONTINUE: "continue"&gt;
+| &lt;SIZEOF: "sizeof"&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// identifier
+// #@@range/lex_ident{
+// 扫描标识符
+// 以字母或下划线开头
+// 必须写在关键字后面
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; TOKEN : {
+&lt;IDENTIFIER: ["a"-"z","A"-"Z","_"] (["a"-"z","A"-"Z","_","0"-"9"])*&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// integer literals
+// 整数
+// #@@range/lex_integer{
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; TOKEN : {
+&lt;INTEGER: ["1"-"9"] (["0"-"9"])* ("U")? ("L")? | "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ ("U")? ("L")? | "0" (["0"-"7"])* ("U")? ("L")?&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+// 实数
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; TOKEN : {
+&lt;REAL_NUMBER: (["0"-"9"])+ "." (["0"-"9"])* (&lt;EXPONENT&gt;)? (["f","F","d","D"])? | "." (["0"-"9"])+ (&lt;EXPONENT&gt;)? (["f","F","d","D"])? | (["0"-"9"])+ &lt;EXPONENT&gt; (["f","F","d","D"])? | (["0"-"9"])+ (&lt;EXPONENT&gt;)? ["f","F","d","D"]&gt;
+| &lt;#EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// character literal
+// 扫描字符字面值
+// #@@range/lex_char{
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; MORE : {
+"\'" : IN_CHARACTER
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// rule1
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;IN_CHARACTER&gt; MORE : {
+&lt;~["\'","\\","\n","\r"]&gt; : CHARACTER_TERM
+| &lt;"\\" (["0"-"7"]){3}&gt; : CHARACTER_TERM
+| &lt;"\\" ~[]&gt; : CHARACTER_TERM
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;CHARACTER_TERM&gt; TOKEN : {
+&lt;CHARACTER: "\'"&gt; : DEFAULT
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// rule5 下一个符号只接受终结符
+// #@@}
+
+// string literal
+// 扫描字符串字面值
+// #@@range/lex_string{
+// 扫描到"后，转移到IN_STRING状态
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;DEFAULT&gt; MORE : {
+"\"" : IN_STRING
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// rule1
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;IN_STRING&gt; MORE : {
+&lt;(~["\"","\\","\n","\r"])+&gt;
+| &lt;"\\" (["0"-"7"]){3}&gt;
+| &lt;"\\" ~[]&gt;
+}
+
+   </PRE>
+  </TD>
+ </TR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//直到再遇到"，回到原状态
+</PRE>
+  </TD>
+ </TR>
+ <!-- Token -->
+ <TR>
+  <TD>
+   <PRE>
+&lt;IN_STRING&gt; TOKEN : {
+&lt;STRING: "\""&gt; : DEFAULT
+}
+
+   </PRE>
+  </TD>
+ </TR>
+</TABLE>
+<H2 ALIGN=CENTER>NON-TERMINALS</H2>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// rule5
+// #@@}
+
+/*
+ *  Grammar
+ */
+
+// #@@range/compilation_unit{
+// 表示1个文件整体的非终端符号
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>compilation_unit</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod1">compilation_unit</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod2">top_defs</A> &lt;EOF&gt;</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/declaration_file{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>declaration_file</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod3">declaration_file</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod4">defconst</A> | <A HREF="#prod5">defstruct</A> | <A HREF="#prod6">defunion</A> )* &lt;EOF&gt;</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/import_stmts{
+// import声明的规则
+/*Declarations import_stmts():
+{
+    String libid;
+    Declarations impdecls = new Declarations();
+}
+{
+    //import声明的列表，含0个或多个import_stmt
+    (libid=import_stmt()
+        {
+            try {
+                Declarations decls = loader.loadLibrary(libid, errorHandler);
+                if (decls != null) {
+                    impdecls.add(decls);
+                    //addKnownTypedefs(decls.typedefs());
+                }
+            }
+            catch (CompileException ex) {
+                throw new ParseException(ex.getMessage());
+            }
+        }
+    )*
+        {
+            return impdecls;
+        }
+}*/
+// #@@}
+
+// #@@range/import_stmt{
+// import声明
+/*String import_stmt():
+{
+    StringBuffer buf = new StringBuffer();
+    String n;
+}
+{
+    //import_stmt由保留字import, name(), 0个或多个点(".")和name()的列表，以及最后的分好(";")排列而成。
+    <IMPORT> n=name()   { buf.append(n); }
+    ("." n=name()       { buf.append("."); buf.append(n); } )*
+    ";"
+        {
+            return buf.toString();
+        }
+}*/
+// #@@}
+
+// #@@range/top_defs{
+// 函数或类型定义
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>top_defs</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod2">top_defs</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod7">defun</A> | <A HREF="#prod8">defvars</A> | <A HREF="#prod4">defconst</A> | <A HREF="#prod5">defstruct</A> | <A HREF="#prod6">defunion</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/defvars{
+// 变量定义的语法
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>defvars</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod8">defvars</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod9">storage</A> <A HREF="#prod10">type</A> <A HREF="#prod11">name</A> ( "=" <A HREF="#prod12">expr</A> )? ( "," <A HREF="#prod11">name</A> ( "=" <A HREF="#prod12">expr</A> )? )* ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/defconst{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>defconst</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod4">defconst</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;CONST&gt; <A HREF="#prod10">type</A> <A HREF="#prod11">name</A> "=" <A HREF="#prod12">expr</A> ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/defun{
+// 函数定义
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>defun</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod7">defun</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod9">storage</A> <A HREF="#prod13">typeref</A> <A HREF="#prod11">name</A> "(" <A HREF="#prod14">params</A> ")" <A HREF="#prod15">block</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/storage{
+// 可以省略的static
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>storage</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod9">storage</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;STATIC&gt; )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/storage{
+// 形参声明
+// 三种形式：
+// 1.无参数(形参声明为void。如getc等)
+// 2.定长参数(参数的个数是相同的。如puts或fgets等)
+// 3.可变长参数(参数的个数不确定。如printf等)
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>params</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod14">params</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;VOID&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod16">fixedparams</A> ( "," "..." )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/fixedparams{
+// 定长参数
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>fixedparams</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod16">fixedparams</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod17">param</A> ( "," <A HREF="#prod17">param</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/param{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>param</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod17">param</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod10">type</A> <A HREF="#prod11">name</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/block{
+// 函数定义的本体
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>block</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod15">block</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"{" <A HREF="#prod18">defvar_list</A> <A HREF="#prod19">stmts</A> "}"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+
+// #@@range/defvar_list{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>defvar_list</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod18">defvar_list</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod8">defvars</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/defstruct{
+// 结构体定义
+// 定义结构体和定义该结构体类型变量必须分开
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>defstruct</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod5">defstruct</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;STRUCT&gt; <A HREF="#prod11">name</A> <A HREF="#prod20">member_list</A> ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>defunion</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod6">defunion</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;UNION&gt; <A HREF="#prod11">name</A> <A HREF="#prod20">member_list</A> ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@range/member_list{
+// 用于表示结构体或联合体成员
+// 不支持对于一个类型可以用逗号分隔定义多个成员
+// eg. int x,y;
+// 只能 int x;
+//      int y;
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>member_list</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod20">member_list</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"{" ( <A HREF="#prod21">slot</A> ";" )* "}"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/slot{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>slot</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod21">slot</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod10">type</A> <A HREF="#prod11">name</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/funcdecl{
+/*UndefinedFunction funcdecl():
+{
+    TypeRef ret;
+    String n;
+    Params ps;
+}
+{
+    <EXTERN> ret=typeref() n=name() "(" ps=params() ")" ";"
+        {
+            TypeRef t = new FunctionTypeRef(ret, ps.parametersTypeRef());
+            return new UndefinedFunction(new TypeNode(t), n, ps);
+        }
+}*/
+// #@@}
+
+/*UndefinedVariable vardecl():
+{
+    TypeNode t;
+    String n;
+}
+{
+    <EXTERN> t=type() n=name() ";"
+        {
+            return new UndefinedVariable(t, n);
+        }
+}
+
+// #@@range/type{
+TypeNode type():
+{ TypeRef ref; }
+{
+    ref=typeref() { return new TypeNode(ref); }
+}*/
+// #@@}
+
+// #@@range/typeref{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>typeref</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod13">typeref</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod22">typeref_base</A> ( "[" "]" | "[" &lt;INTEGER&gt; "]" | "*" | "(" <A HREF="#prod23">param_typerefs</A> ")" )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/param_typerefs{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>param_typerefs</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod23">param_typerefs</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;VOID&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod24">fixedparam_typerefs</A> ( "," "..." )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/fixedparam_typerefs{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>fixedparam_typerefs</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod24">fixedparam_typerefs</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod13">typeref</A> ( "," <A HREF="#prod13">typeref</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/typeref_base{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>typeref_base</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod22">typeref_base</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;VOID&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;CHAR&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;SHORT&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;INT&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;LONG&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;UNSIGNED&gt; &lt;CHAR&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;UNSIGNED&gt; &lt;SHORT&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;UNSIGNED&gt; &lt;INT&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;UNSIGNED&gt; &lt;LONG&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;STRUCT&gt; &lt;IDENTIFIER&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;UNION&gt; &lt;IDENTIFIER&gt;</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/typedef{
+//typedef语句
+/*TypedefNode typedef():
+{
+    Token t;
+    TypeRef ref;
+    Token newname;
+}
+{
+    t=<TYPEDEF> ref=typeref() newname=<IDENTIFIER> ";"
+        {
+            addType(newname.image);
+            return new TypedefNode(location(t), ref, newname.image);
+        }
+}*/
+// #@@}
+
+// #@@range/stmts{
+// 语句的语法
+// 简单的0个或多个stmt的排列
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>stmts</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod19">stmts</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod25">stmt</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/stmt{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod25">stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( ";" | <A HREF="#prod26">labeled_stmt</A> | <A HREF="#prod12">expr</A> ";" | <A HREF="#prod15">block</A> | <A HREF="#prod27">if_stmt</A> | <A HREF="#prod28">while_stmt</A> | <A HREF="#prod29">dowhile_stmt</A> | <A HREF="#prod30">for_stmt</A> | <A HREF="#prod31">switch_stmt</A> | <A HREF="#prod32">break_stmt</A> | <A HREF="#prod33">continue_stmt</A> | <A HREF="#prod34">goto_stmt</A> | <A HREF="#prod35">return_stmt</A> )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>labeled_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod26">labeled_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;IDENTIFIER&gt; ":" <A HREF="#prod25">stmt</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@range/if_stmt{
+// if语句
+//大括号可以省
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>if_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod27">if_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;IfNode&gt; "(" <A HREF="#prod12">expr</A> ")" <A HREF="#prod25">stmt</A> ( &lt;ELSE&gt; <A HREF="#prod25">stmt</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/while_stmt{
+//while语句的语法
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>while_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod28">while_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;WHILE&gt; "(" <A HREF="#prod12">expr</A> ")" <A HREF="#prod25">stmt</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>dowhile_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod29">dowhile_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;DO&gt; <A HREF="#prod25">stmt</A> &lt;WHILE&gt; "(" <A HREF="#prod12">expr</A> ")" ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//for语句语法
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>for_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod30">for_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;FOR&gt; "(" ( <A HREF="#prod12">expr</A> )? ";" ( <A HREF="#prod12">expr</A> )? ";" ( <A HREF="#prod12">expr</A> )? ")" <A HREF="#prod25">stmt</A></TD>
+</TR>
+</TABLE>
+<HR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>switch_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod31">switch_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;SWITCH&gt; "(" <A HREF="#prod12">expr</A> ")" "{" <A HREF="#prod36">case_clauses</A> "}"</TD>
+</TR>
+</TABLE>
+<HR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>case_clauses</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod36">case_clauses</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod37">case_clause</A> )* ( <A HREF="#prod38">default_clause</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>case_clause</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod37">case_clause</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod39">cases</A> <A HREF="#prod40">case_body</A></TD>
+</TR>
+</TABLE>
+<HR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>cases</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod39">cases</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;CASE&gt; <A HREF="#prod41">primary</A> ":" )+</TD>
+</TR>
+</TABLE>
+<HR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>default_clause</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod38">default_clause</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;DEFAULT_&gt; ":" <A HREF="#prod40">case_body</A></TD>
+</TR>
+</TABLE>
+<HR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>case_body</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod40">case_body</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod25">stmt</A> )+</TD>
+</TR>
+</TABLE>
+<HR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>goto_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod34">goto_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;GOTO&gt; &lt;IDENTIFIER&gt; ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@range/break_stmt{
+// break语句
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>break_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod32">break_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;BREAK&gt; ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>continue_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod33">continue_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;CONTINUE&gt; ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+//return语句
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>return_stmt</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod35">return_stmt</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;RETURN&gt; ";"</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;RETURN&gt; <A HREF="#prod12">expr</A> ";"</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@range/expr{
+// term()表示不包括二元运算符在内的单位“项”的非终端符号
+// C语言中，赋值的左边可以用指针表示非常复杂的表达式，因此一般“项”可以位于赋值的左边
+// opassign_op 表示复合赋值运算符,如"*=", "+="
+// lhs:赋值的左边
+// rhs:赋值的右边
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod12">expr</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod42">term</A> "=" <A HREF="#prod12">expr</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod42">term</A> <A HREF="#prod43">opassign_op</A> <A HREF="#prod12">expr</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod44">expr10</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/opassign_op{
+// 复合赋值运算符
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>opassign_op</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod43">opassign_op</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( "+=" | "-=" | "*=" | "/=" | "%=" | "&amp;=" | "|=" | "^=" | "&lt;&lt;=" | "&gt;&gt;=" )</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/expr10{
+// javaCC会将1个规则转化为1个方法
+// 如果规则中写有非终端符号(如expr9())，就会直接调用expr9方法。如果写的是终端符号，则直接转化为token
+// expr10规则的左侧不能出现expr10自身或者以expr10开头的符号
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr10</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod44">expr10</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod45">expr9</A> ( "?" <A HREF="#prod12">expr</A> ":" <A HREF="#prod44">expr10</A> )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/expr9{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr9</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod45">expr9</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod46">expr8</A> ( "||" <A HREF="#prod46">expr8</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/expr8{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr8</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod46">expr8</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod47">expr7</A> ( "&amp;&amp;" <A HREF="#prod47">expr7</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/expr7{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr7</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod47">expr7</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod48">expr6</A> ( "&gt;" <A HREF="#prod48">expr6</A> | "&lt;" <A HREF="#prod48">expr6</A> | "&gt;=" <A HREF="#prod48">expr6</A> | "&lt;=" <A HREF="#prod48">expr6</A> | "==" <A HREF="#prod48">expr6</A> | "!=" <A HREF="#prod48">expr6</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/expr6{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr6</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod48">expr6</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod49">expr5</A> ( "|" <A HREF="#prod49">expr5</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/expr5{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr5</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod49">expr5</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod50">expr4</A> ( "^" <A HREF="#prod50">expr4</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/expr4{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr4</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod50">expr4</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod51">expr3</A> ( "&amp;" <A HREF="#prod51">expr3</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/expr3{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr3</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod51">expr3</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod52">expr2</A> ( "&gt;&gt;" <A HREF="#prod52">expr2</A> | "&lt;&lt;" <A HREF="#prod52">expr2</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/expr2{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr2</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod52">expr2</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod53">expr1</A> ( "+" <A HREF="#prod53">expr1</A> | "-" <A HREF="#prod53">expr1</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/expr1{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>expr1</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod53">expr1</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod42">term</A> ( "*" <A HREF="#prod42">term</A> | "/" <A HREF="#prod42">term</A> | "%" <A HREF="#prod42">term</A> )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/term{
+// term()可以是带有类型转换运算符的term()或者unary
+// term可以添加类型转换，而unary()则不能
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>term</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod42">term</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"(" <A HREF="#prod10">type</A> ")" <A HREF="#prod42">term</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod54">unary</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/unary{
+// 带有前置运算符的项的符号
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>unary</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod54">unary</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"++" <A HREF="#prod54">unary</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"--" <A HREF="#prod54">unary</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"+" <A HREF="#prod42">term</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"-" <A HREF="#prod42">term</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"!" <A HREF="#prod42">term</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"~" <A HREF="#prod42">term</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"*" <A HREF="#prod42">term</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"&amp;" <A HREF="#prod42">term</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;SIZEOF&gt; "(" <A HREF="#prod10">type</A> ")"</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;SIZEOF&gt; <A HREF="#prod54">unary</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod55">postfix</A></TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/postfix{
+// 后置运算符规则
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>postfix</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod55">postfix</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod41">primary</A> ( "++" | "--" | "[" <A HREF="#prod12">expr</A> "]" | "." <A HREF="#prod11">name</A> | "-&gt;" <A HREF="#prod11">name</A> | "(" <A HREF="#prod56">args</A> ")" )*</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/name{
+// 非终端符号name和<IDENTIFIER>是相同的
+// 将Token对象赋给了临时变量tok，并且返回tok中image属性的值作为name()的语义值
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>name</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod11">name</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;IDENTIFIER&gt;</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/args{
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>args</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod56">args</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod12">expr</A> ( "," <A HREF="#prod12">expr</A> )* )?</TD>
+</TR>
+</TABLE>
+<HR>
+ <!-- Special token -->
+ <TR>
+  <TD>
+<PRE>
+// #@@}
+
+// #@@range/primary{
+// 字面量的规则
+//非终端符号primary是数值、字符、字符串的字面量、变量以及用括号括起来的表达式中的任意一者
+//这里为各个选项省对应的节点对象
+//最小的单位
+//除最后，一般stmt->expr->term->primary
+</PRE>
+  </TD>
+ </TR>
+
+<TABLE ALIGN=CENTER>
+<CAPTION><STRONG>primary</STRONG></CAPTION>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod41">primary</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;INTEGER&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;CHARACTER&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;STRING&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;IDENTIFIER&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>|</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"(" <A HREF="#prod12">expr</A> ")"</TD>
+</TR>
+</TABLE>
+<HR>
+</BODY>
+</HTML>

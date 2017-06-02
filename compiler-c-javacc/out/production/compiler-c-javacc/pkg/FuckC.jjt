@@ -1,0 +1,1056 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+ */
+options
+{
+  JDK_VERSION = "1.5";
+  static = true;
+}
+
+PARSER_BEGIN(FuckC)
+package pkg;
+import java.util.*;
+import java.io.*;
+
+public class FuckC extends Exception
+{
+  private static String symtab[][]=new String [100][8];
+  private static String temp[]=new String [8];
+  private static int n_arg=0;
+  private static String switch_expr;
+  private static int label=0;
+  private static int label_stack[]=new int[100];
+  private static int label_pos=0;
+
+  private static int symtab_pos=0;
+  private static int pointer_level=0;
+  private static int var_size=1;
+  private static String arr[]=new String[500];
+  private static int top=0;
+  private static int i=0;
+  private static PrintWriter pr,pr_sym;
+  private static void assign()
+  {
+
+    pr.write("t"+i+"="+arr[top-3]+arr[top-2]+arr[top-1]+"\n");
+    top-=3;
+    arr[top++]="t"+i;
+    i++;
+  }
+
+  private static boolean check_redeclaration(String a)
+   {
+
+     for(int i=0;i<symtab_pos;i++)
+     {
+
+       if(a.equals(symtab[i][0]))
+         return true;
+     }
+   return false;
+   }
+
+   private static boolean check_declaration(String a)
+   {
+
+    for(int i=0;i<symtab_pos;i++)
+     {
+
+       if(a.equals(symtab[i][0]))
+         return true;
+     }
+   return false;
+
+   }
+
+
+  private static void u_assign()
+  {
+    pr.write("t"+i+"="+arr[top-2]+arr[top-1]+"\n");
+    top-=2;
+    arr[top++]="t"+i;
+    i++;
+  }
+
+  private static void assign_var(String tem)
+  {
+
+    pr.write(tem+"="+arr[top-1]+"\n");
+    top-=1;
+    arr[top++]=tem;
+
+  }
+
+  private static void var_assign()
+  {
+    String t=arr[top-3];
+   pr.write(arr[top-3]+arr[top-2]+arr[top-1]+"\n");
+   top-=3;
+   arr[top++]=t;
+  }
+
+  private static void display_symtab() throws Exception
+  {
+
+
+    for(int i=0;i<symtab_pos;i++)
+    {
+     pr_sym.print(symtab[i][0]+" "+symtab[i][1]+" "+symtab[i][2]+" "+symtab[i][3]+" "+symtab[i][4]+" "+
+      symtab[i][5]+" "+symtab[i][6]+" \n");
+
+    }
+
+}
+
+  public static void main(String args []) throws ParseException, IOException, Exception
+  {
+
+        FuckC parser =new FuckC(new FileInputStream("input.txt"));
+
+     pr=new PrintWriter("output.txt");
+     pr_sym=new PrintWriter("symtab.txt");
+    //while (true)
+    {
+    System.out.println("PCD_PACK_1 Reading from file ...");
+
+      try
+      {
+        SimpleNode n = FuckC.Start();
+        if(n != null)
+         {
+            n.dump(">>");
+            System.out.println("OK.");
+                      pr.close();
+                      pr_sym.close();
+          }
+          else System.out.println("Goodbye.");
+/*        switch (FuckC.top_unit())
+        {
+          case 0 :
+          System.out.println("OK.");
+          pr.close();
+          pr_sym.close();
+          break;
+          case 1 :
+          System.out.println("Goodbye.");
+          break;
+          default :
+          break;
+        }*/
+      }
+      catch(ParseException e){
+        System.out.println("C Parser Version 0.1Alpha:  Encountered errors during parse.");
+        e.printStackTrace();
+      }
+
+          catch (Exception e)
+      {
+        System.out.println("NOK.");
+        System.out.println(e.getMessage());
+        FuckC.ReInit(System.in);
+      }
+      catch (Error e)
+      {
+        System.out.println("Oops.");
+        System.out.println(e.getMessage());
+        //break;
+      }
+    }
+  }
+}
+
+PARSER_END(FuckC)
+
+// 不生成token的扫描
+SKIP : {
+//跳过空白符
+ " "    //空格
+|  "\t" //制表符
+|  "\n" //回车
+|  "\r" //换行
+|  <"//" (~["\n","\r"])* ("\n"| "\r" | "\r\n")?>    //跳过单行注释
+{
+  System.out.print("\t\t\tSkipped line comment\n");
+}
+/*废弃，不能这么写
+| <"*//*" (~[])* "*//*">*/
+|   < "/*" (~["*"])* ("*")+ (~["/", "*"] (~["*"])* ("*")+)* "/" > //跳过块注释
+{
+  System.out.print("\t\t\tSkipped block comment\n");
+}
+
+}
+
+
+TOKEN : {
+//整型
+ <INTEGER_LITERAL: <DECIMAL_LITERAL> (["u", "U", "l","L"])? | <HEX_LITERAL> (["u", "U","l","L"])? | <OCTAL_LITERAL> (["u", "U","l","L"])?>
+|  <#DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])*>   //10进制
+|  <#HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+>   //16进制
+|  <#OCTAL_LITERAL: "0" (["0"-"7"])*>   //8进制
+//浮点数
+|  <FLOATING_POINT_LITERAL: (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)? (["f","F","d","D"])? | "." (["0"-"9"])+ (<EXPONENT>)? (["f","F","d","D"])? | (["0"-"9"])+ <EXPONENT> (["f","F","d","D"])? | (["0"-"9"])+ (<EXPONENT>)? ["f","F","d","D"]>
+|  <#EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+>
+//char
+|  <CHARACTER_LITERAL: "\'" (~["\'","\\","\n","\r"] | "\\" (["n","t","b","r","f","\\","\'","\""] )) "\'">
+//string
+|  <STRING_LITERAL: "\"" ( ~["\"","\\","\n","\r"] | "\\" ( ["n","t","b","r","f","\\","\'","\""] | ( ["\n","\r"] | "\r\n")))* "\"">
+}
+
+
+//扫描保留字
+TOKEN :
+{
+  <AUTO     : "auto" >
+| <REGISTER : "register">
+| <STATIC   : "static">
+| <EXTERN   : "extern">
+| <TYPEDEF  : "typedef">
+| <VOID     : "void">
+| <CHAR     : "char">
+| <SHORT    : "short">
+| <INT      : "int">
+| <LONG     : "long">
+| <FLOAT    : "float">
+| <DOUBLE   : "double">
+| <SIGNED   : "signed">
+| <UNSIGNED : "unsigned">
+| < CONST   : "const" >
+| < VOLATILE: "volatile" >
+| < CASE    : "case" >
+| < DFLT    : "default" >   //DEFAULT关键字javaCC自用
+| < IF      : "if" >
+| < ELSE    : "else" >
+| < SWITCH  : "switch" >
+| < WHILE   : "while" >
+| < FOR     : "for" >
+| < DO      : "do" >
+| < GOTO    : "goto" >
+| < CONTINUE: "continue" >
+| < BREAK   : "break" >
+| < RETURN  : "return" >
+}
+
+//扫描标识符
+//神坑:必须在定义在保留字后面,因为javacc有最长匹配原则
+TOKEN : {
+    <IDENTIFIER: ["a"-"z", "A"-"Z", "_"] (["a"-"z", "A"-"Z", "_", "0"-"9"])*>
+}
+
+SimpleNode Start() throws Exception:{}{
+  top_unit() {
+    return jjtThis;
+  }
+}
+
+//Top unit
+int top_unit() throws Exception :
+{}
+{
+ (ex_decl())+ <EOF>
+  {
+    System.out.print("\t\t\tAccepted \n");
+    //throw new ParseException("Redeclaration");
+    display_symtab();
+      symtab_pos=0;
+        return 0;
+  }
+
+}
+
+//Ex Declaration
+void ex_decl() throws Exception:
+{}
+{
+
+  fun_def()  { System.out.print("\t\t\tEx Declaration \n"); }
+
+}
+
+//Function definition
+void fun_def() throws Exception:
+{
+    Token t=null;
+}
+{
+
+ (
+   {
+      System.out.print("\t\t\tPrevious sym tab: \n");
+      display_symtab();
+      symtab_pos=0;
+   }
+   type_specifiers()
+
+    t=<IDENTIFIER> {symtab[symtab_pos][0]=t.image; symtab[symtab_pos][2]="fun";
+                  symtab_pos++; //System.out.print("\t\t\tIDENT\n");
+                   }
+            "(" [param_type_list() ]")"
+              {
+                 symtab[symtab_pos-n_arg-1][3]=n_arg+"";
+                 n_arg=0;
+              }
+            compound_stm()
+   )
+  {
+   System.out.print("\t\t\tFunction definition\n");
+  }
+}
+
+
+
+//Parameter type list
+void param_type_list() : {}
+{
+    param_list()
+      {
+      System.out.print("\t\t\tParameter type List\n");
+     }
+
+}
+
+//Parameter List
+void param_list() : {}
+{
+    param_decl() (LOOKAHEAD(2) "," param_decl())*
+    {
+      System.out.print("\t\t\tParameter List\n");
+
+     }
+}
+
+//Parameter declaration
+void param_decl():
+{
+}
+{
+  type_specifiers() decl()
+  {
+      System.out.print("\t\t\tParameter declaration\n");
+       symtab_pos++;
+       n_arg++;
+  }
+}
+
+//Compound statement
+void compound_stm() : {}
+{
+    "{" [ LOOKAHEAD(decl_list()) decl_list() ]
+        [ stmt_list() ]
+    "}"
+    {
+      System.out.print("\t\t\tCompound statement\n");
+    }
+}
+
+//statement list
+void stmt_list() : {}
+{
+    (stmt())+
+    {
+      System.out.print("\t\t\tstatement list\n");
+   }
+}
+
+
+
+//Statement
+void stmt() : {}
+{
+    ( LOOKAHEAD(2) case_default_stmt() |
+      expr_stmt() |
+      compound_stm() |
+      if_switch_stmt() |
+      while_for_stmt() |
+      jump_stmt() )
+      {
+      System.out.print("\t\t\tStatement\n");
+   }
+}
+
+//if and switch
+void if_switch_stmt():
+{
+}
+{
+  ( <IF> "(" expr() ")"
+              { label_stack[label_pos++]=label++;
+                 pr.write("\nif (not "+arr[top-1]+") \ngoto false_"+label_stack[label_pos-1]+"\n");
+
+                //label_count++;
+                }  stmt()
+                {
+                  pr.write("goto end_"+label_stack[label_pos-1]+"\n");
+                   pr.write("false_"+label_stack[label_pos-1]+":\n");
+
+                } [ LOOKAHEAD(2) <ELSE>
+                 stmt() ]
+                {
+                  pr.write("end_"+label_stack[label_pos-1]+":\n");
+                  label_pos--;
+                } |
+      <SWITCH> "(" expr()
+      {
+        switch_expr=arr[top-1];
+        label_stack[label_pos++]=label++;
+      } ")" stmt()
+      {
+         pr.print("end_"+label_stack[label_pos-1]+"\n");
+        label_pos--;
+      } )
+      {
+      System.out.println("\t\t\tSelection statement ");
+   }
+}
+
+//case && default
+void case_default_stmt() : {Token t=null;}
+{
+    ( t=<IDENTIFIER> ":"
+    {
+       pr.write(t.image+":\n");
+    }  stmt() |
+      <CASE>  (t=<INTEGER_LITERAL> | t=<CHARACTER_LITERAL>)":"
+      {
+        label_stack[label_pos++]=label++;
+        pr.write("t="+t.image+"\n");
+        pr.write("t="+switch_expr+"=="+t.image+"\n");
+        pr.write("if(not t)\n");
+        pr.write("goto end_"+label_stack[label_pos-1]+"\n");
+      }  stmt()
+      {
+        pr.write("end_"+label_stack[label_pos-1]+"\n");
+        label_pos--;
+      }
+       |
+      <DFLT> ":"
+      {
+          pr.write("default: \n");
+      } stmt() )
+      {
+      System.out.println("\t\t\tLabeled statement ");
+      }
+}
+
+//while , do…while, for
+void while_for_stmt():
+{
+}
+{
+    ( <WHILE> "(" expr() ")"
+    {
+      label_stack[label_pos++]=label++;
+       pr.write("begin_"+label_stack[label_pos-1]+":\n");
+       pr.write("if (not "+arr[top-1]+")\n");
+       pr.write("goto end_"+label_stack[label_pos-1]+"\n");
+
+    } stmt()
+    {
+      pr.write("goto begin_"+label_stack[label_pos-1]+"\n");
+      pr.write("end_"+label_stack[label_pos-1]+"\n");
+      label_pos--;
+
+    } |
+      <DO>
+      {
+      label_stack[label_pos++]=label++;
+       pr.write("begin_"+label_stack[label_pos-1]+":\n");
+
+      } stmt() <WHILE> "(" expr() ")" ";"
+      {
+
+        pr.write("if ("+arr[top-1]+")\n");
+        pr.write("goto begin_"+label_stack[label_pos-1]+"\n");
+        pr.write("end_"+label_stack[label_pos-1]+":\n");
+        label_pos--;
+      } |
+      <FOR> "(" [ expr() ] ";"
+      {
+      label_stack[label_pos++]=label++;
+      pr.write("begin_"+label_stack[label_pos-1]+"\n");
+      } [ expr() ]
+      {
+
+        pr.write("if(not "+arr[top-1]+")\n");
+        pr.write("goto end_"+label_stack[label_pos-1]+"\n");
+      } ";"
+      {
+        pr.write("goto body_"+label_stack[label_pos-1]+"\n");
+
+        pr.write("inc_"+label_stack[label_pos-1]+":\n");
+      } [ expr() ] ")"
+      {
+        pr.write("goto begin_"+label_stack[label_pos-1]+"\n");
+        pr.write("body_"+label_stack[label_pos-1]+":\n");
+      } stmt()
+      {
+        pr.write("goto inc_"+label_stack[label_pos-1]+"\n");
+        pr.write("end_"+label_stack[label_pos-1]+"\n");
+        label_pos--;
+      } )
+      {
+      System.out.println("\t\t\tIteration statement ");
+      }
+
+
+}
+
+//goto & continue & return & break
+void jump_stmt():
+{
+  Token t=null;
+}
+{
+  ( <GOTO> t=<IDENTIFIER> ";"
+  {
+    pr.write("goto "+t.image+"\n");
+  } |
+      <CONTINUE> ";"
+      {
+        pr.write("goto begin_"+label_stack[label_pos-1]+"\n");
+      } |
+      <BREAK> ";"
+      {
+        pr.write("goto end_"+label_stack[label_pos-1]+"\n");
+      } |
+      <RETURN> [ expr() ] ";" )
+      {
+      System.out.println("\t\t\tJump statement ");
+   }
+}
+
+//constant expression
+void constant_expr() : {}
+{
+    cond_expr()
+    {
+      System.out.print("\t\t\tConstant expression\n");
+      }
+}
+
+//expression statement
+void expr_stmt() : {}
+{
+    [ expr() ] ";"
+    {
+      System.out.print("\t\t\tExpression statement\n");
+   }
+}
+
+//expression
+void expr():
+{
+}
+{
+    assign_expr() ( "," assign_expr() )*
+    {
+      System.out.print("\t\t\tExpression\n");
+    }
+
+
+}
+
+//Declation list
+void decl_list() : {}
+{
+    ( LOOKAHEAD(decls()) decls() )+
+    {
+      System.out.print("\t\t\tDeclaration list\n");
+     }
+}
+
+
+void decls():
+{}
+{
+    decl_specifiers() init_decl_list()  ";"
+    {
+      System.out.print("\t\t\tDeclaration specifiers\n");
+     }
+}
+
+//Declation specifiers
+void decl_specifiers():
+{}
+{
+  (
+    storage_specifiers() [LOOKAHEAD(decl_specifiers()) decl_specifiers()]
+    |
+    type_modifiers() [LOOKAHEAD(decl_specifiers()) decl_specifiers()]
+    |
+    type_specifiers() [LOOKAHEAD(decl_specifiers()) decl_specifiers()]
+    |
+    type_qualifiers() [LOOKAHEAD(decl_specifiers()) decl_specifiers()]
+  )
+  {
+    System.out.print("\t\t\tDeclaration specifier\n");
+  }
+}
+
+
+//Storage class specifiers
+void storage_specifiers() : {Token t=null;}
+{
+    ( t=<AUTO> | t=<REGISTER> | t=<STATIC> | t=<EXTERN>)
+    {
+
+      symtab[symtab_pos][4]=t.image;
+      temp[4]=t.image;
+      System.out.print("\t\t\tStorage class specifiers \n");
+    }
+}
+
+//Type modifiers
+void type_modifiers() :
+{Token t=null; }
+{
+ (t=< SHORT >|t=< LONG >|t=< SIGNED >|t=< UNSIGNED >)
+    {
+      symtab[symtab_pos][2]=t.image;
+      temp[2]=t.image;
+
+        System.out.print("\t\t\tType modifiers. \n");
+    }
+}
+
+//Type specifiers
+void type_specifiers() :
+{Token t=null;}
+{
+    ( t=<VOID> | t=<CHAR> | t=<INT> | t=<FLOAT> | t=<DOUBLE>
+    )
+    {
+      symtab[symtab_pos][1]=t.image;
+      temp[1]=t.image;
+
+        System.out.print("\t\t\tType specifiers. \n");
+    }
+}
+
+//Type Qualifiers
+void type_qualifiers() : {Token t=null;}
+{
+    ( t=<CONST> | t=<VOLATILE> )
+    {
+      symtab[symtab_pos][3]=t.image;
+      temp[3]=t.image;
+
+      System.out.println("\t\t\tType qualifiers ");
+     }
+}
+
+
+//Init declarator list
+void init_decl_list() :
+{}
+{
+    init_decl() ("," init_decl()
+    {
+       symtab[symtab_pos][1]=symtab[symtab_pos-1][1];
+    } )*
+      {
+      System.out.print("\t\t\tInit declarator list\n");
+         for(int i=0;i<7;i++)
+       {
+
+          temp[i]=null;
+       }
+
+      }
+}
+
+//Init declarator
+void init_decl():
+{Token t=null;}
+{
+  decl() ["=" //{ arr[top++]=t.image; }
+         init()
+         {
+         System.out.print("\t\t\tInit declarator\n");
+          assign_var(symtab[symtab_pos][0]);
+
+
+          }
+          ]
+       {
+         if(symtab[symtab_pos][4]==null) symtab[symtab_pos][4]="auto";
+         if(symtab[symtab_pos][3]==null) symtab[symtab_pos][3]="volatile";
+         symtab_pos++;
+       }
+
+}
+
+//Declarator
+void decl() : {}
+{
+    [ ptr() ] direct_decl()
+    {
+      System.out.print("\t\t\tDeclarator\n");
+      pointer_level=0;
+     }
+}
+
+//Direct Declarator
+void direct_decl():{Token t=null,t1=null;}
+{
+    ( t=<IDENTIFIER>
+     {
+       if(check_redeclaration(t.image))
+       throw new ParseException("error: redeclaration of '"+symtab[symtab_pos][1]+" "+t.image+"'");
+     }
+     |
+     "(" decl() ")" )
+     {
+
+
+       for(int i=1;i<5;i++)
+       {
+         if(temp[i]!=null)
+          symtab[symtab_pos][i]=temp[i];
+        }
+        symtab[symtab_pos][0]=t.image;
+     }
+
+
+     ( "[" t1=<INTEGER_LITERAL>{ var_size*=Integer.parseInt(t1.image); }  "]" )*
+      {
+          symtab[symtab_pos][5]=var_size+"";
+          if(symtab[symtab_pos][1]!=null)
+          {
+            switch(symtab[symtab_pos][1])
+            {
+              case "int":
+                  symtab[symtab_pos][5]=(var_size*4)+"";
+                  break;
+              case "float":
+                  symtab[symtab_pos][5]=(var_size*4)+"";
+                  break;
+              case "double":
+                  symtab[symtab_pos][5]=(var_size*8)+"";
+                  break;
+              case "char":
+                  symtab[symtab_pos][5]=(var_size*1)+"";
+                  break;
+            }
+            var_size=1;
+
+          }
+
+          System.out.print("\t\t\tDirect Declarator\n");
+
+      }
+}
+
+//Pointer
+void ptr():
+  { pointer_level++;
+  }
+{
+   "*" [ptr()]
+   {
+     symtab[symtab_pos][6]=pointer_level+"";
+
+     System.out.print("\t\t\tPointer. \n");
+   }
+}
+
+//Initializer
+void init():
+{}
+{
+  (assign_expr())
+  {
+    System.out.print("\t\t\tInitializer\n");
+  }
+}
+
+//Initializer list
+void init_list():
+{
+}
+{
+ init() (LOOKAHEAD(2) "," init() )*
+  {
+    System.out.print("\t\t\tInitializer list\n");
+  }
+}
+
+
+//Assignment Expression
+void assign_expr():
+{
+}
+{
+  (
+    LOOKAHEAD(unary_expr() assign_operator())
+    unary_expr() assign_operator()
+    {
+      if(arr[top-1]=="=")
+       {
+         if(arr[top-2].charAt(0)<65)
+         {
+           throw new ParseException("error: lvalue required as left operand of assignment");
+         }
+       }
+    } assign_expr() { var_assign();}
+    |
+    LOOKAHEAD(3) cond_expr()
+  )
+  {
+    System.out.print("\t\t\tAssignment expression\n");
+  }
+}
+
+//Assignment operator
+void assign_operator() :
+{Token t=null;}
+{
+
+    ( t="="
+    { arr[top++]=t.image;
+    } | t="*="
+    { arr[top++]="="+arr[top-2]+"*";
+    } | t="/="
+    { arr[top++]="="+arr[top-2]+"/";
+    }| t="%="
+    { arr[top++]="="+arr[top-2]+"%";
+    }| t="+="
+    { arr[top++]="="+arr[top-2]+"+";
+    }| t="-="
+    { arr[top++]="="+arr[top-2]+"-";
+    }| t="<<="
+    { arr[top++]="="+arr[top-2]+"<< ";
+    } | t=">>="
+    { arr[top++]="="+arr[top-2]+">>";
+    } | t="&="
+    { arr[top++]="="+arr[top-2]+"&";
+    }| t="^="
+    { arr[top++]="="+arr[top-2]+"^";
+    } | t="|="
+    { arr[top++]="="+arr[top-2]+"|";
+    }
+    )
+    {
+
+      System.out.print("\t\t\tAssignment operator\n");
+      }
+}
+
+//Unary expression
+void unary_expr() : {Token t=null;}
+{
+    ( LOOKAHEAD(3) postfix_expr() |
+      t="++" { arr[top++]="1+"; } unary_expr(){String t1=arr[top-1]; u_assign(); assign_var(t1); } |
+      t="--" { arr[top++]="1-"; } unary_expr() {t1=arr[top-1]; u_assign(); assign_var(t1); } |
+      t="-" { arr[top++]="-"; } unary_expr() {t1=arr[top-1]; u_assign(); }|
+      t="&" { arr[top++]="&"; } unary_expr() {t1=arr[top-1]; u_assign();  }|
+      t="*" { arr[top++]="*"; } unary_expr() {t1=arr[top-1]; u_assign(); }|
+      t="~" { arr[top++]="~"; } unary_expr() {t1=arr[top-1]; u_assign();  }|
+      t="!" { arr[top++]="!"; } unary_expr() {t1=arr[top-1]; u_assign();  }
+
+    )
+      {
+      System.out.println("\t\t\tUnary expression ");
+      }
+}
+
+
+
+//Postfix expression
+void postfix_expr() : {Token t=null;}
+{
+    (                  prefix_expr() ( "[" expr() "]"  { //System.out.print("\t "+arr[top-2]+arr[top-1]+"\n");
+                                             arr[top-1]=arr[top-2]+"+"+arr[top-1];
+                                             }
+                           |
+                          t="++" { arr[top++]="+1"; String t1=arr[top-2]; u_assign(); assign_var(t1); }|
+                          t="--" { arr[top++]="-1";  t1=arr[top-2]; u_assign(); assign_var(t1); } )*
+     )
+     {
+      System.out.print("\t\t\tPostfix expression\n");
+      }
+
+
+}
+
+//prefix expression
+void prefix_expr() : {Token t;}
+{
+    ( t=<IDENTIFIER>{
+
+                      if(!check_declaration(t.image))
+                      throw new ParseException("error: '"+t.image+"' was not declared in this scope");
+
+                         arr[top++]=t.image; } |
+      constant()|
+      "(" expr() ")"
+      )
+      {
+      System.out.print("\t\t\tPrimary expression\n");
+      }
+}
+
+//conditional expression
+void cond_expr():
+{
+}
+{
+    logical_or_expr()
+    {
+      System.out.print("\t\t\tConditional expression\n");
+      }
+}
+
+//logical or expression
+void logical_or_expr() : {Token t=null;}
+{
+    logical_and_expr() [ t="||" { arr[top++]=t.image; } logical_or_expr()
+    {
+      System.out.print("\t\t\tLogical OR expression\n");
+      assign();
+      }
+      ]
+}
+
+
+//logical and expression
+void logical_and_expr():
+{
+  Token t=null;
+}
+{
+   Inclusive_or_expr() [ t="&&" { arr[top++]=t.image; } logical_and_expr()
+    {
+      System.out.print("\t\t\tLogical And expression\n");
+      assign();
+      }
+       ]
+}
+
+//Inclusive Or expression
+void Inclusive_or_expr():
+{
+  Token t=null;
+}
+{
+   exclusive_or_expr() [ t="|" { arr[top++]=t.image; } Inclusive_or_expr()
+    {
+      System.out.print("\t\t\tInclusive OR expression\n");
+      assign();
+      }
+       ]
+}
+
+//Exclusive Or expression
+void exclusive_or_expr():
+{ Token t=null;
+}
+{
+  and_expr() [ t="^" { arr[top++]=t.image; } exclusive_or_expr()
+    {
+
+      System.out.print("\t\t\tExclusive OR expression\n");
+          assign();
+      }
+       ]
+}
+
+//And expression
+void and_expr():
+{
+  Token t=null;
+}
+{
+    equal_expr() [ t="&" { arr[top++]=t.image; } and_expr()
+     {
+      System.out.print("\t\t\tAnd expression\n");
+              assign();
+      }
+           ]
+
+}
+
+//equality expression
+void equal_expr():
+{
+  Token t=null;
+}
+{
+   relation_expr() [ ( t="==" | t="!=" ){ arr[top++]=t.image; } equal_expr()
+    {
+      System.out.print("\t\t\tEquality expression\n");
+             assign();
+
+      }
+
+        ]
+
+}
+
+//Relational expression
+void relation_expr():
+{
+  Token t=null;
+}
+{
+   shift_expr() [ ( t="<" | t=">" | t="<=" | t=">=" ){ arr[top++]=t.image; } relation_expr()
+    {
+      System.out.print("\t\t\tRelational expression\n");
+             assign();
+      }
+       ]
+
+}
+
+//shift expression
+void shift_expr():
+{
+  Token t=null;
+}
+{
+  additive_expr() [ ( t="<<" | t=">>" ){ arr[top++]=t.image; } shift_expr()
+       {
+      System.out.print("\t\t\tShift expression\n");
+              assign();
+
+       }
+      ]
+}
+
+//additive expression
+void additive_expr():
+{Token t=null;
+}
+{
+    multiplicative_expr() [ ( t="+" | t="-" ) { arr[top++]=t.image; } additive_expr()
+       {
+        System.out.print("\t\t\tAdditive expression\n");
+        assign();
+       }   ]
+
+}
+
+void multiplicative_expr():
+{Token t=null;
+}
+{
+  unary_expr() [ ( t="*" | t="/" | t="%" ){ arr[top++]=t.image; }
+          multiplicative_expr() {
+                  System.out.print("\t\t\tMultiplicative expression \n");
+                 assign();
+
+                 }
+       ]
+
+}
+
+//constant
+void constant():
+{Token t=null;}
+{
+    (t=<INTEGER_LITERAL> | t=<FLOATING_POINT_LITERAL> | t=<CHARACTER_LITERAL> | t=<STRING_LITERAL>)
+      {
+       arr[top++]=t.image;
+       System.out.print("\t\t\tConstant "+t.image+"\n");
+      }
+}
