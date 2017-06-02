@@ -33,57 +33,55 @@ public interface FuckCConstants {
   /** RegularExpression Id. */
   int STATIC = 17;
   /** RegularExpression Id. */
-  int EXTERN = 18;
+  int TYPEDEF = 18;
   /** RegularExpression Id. */
-  int TYPEDEF = 19;
+  int VOID = 19;
   /** RegularExpression Id. */
-  int VOID = 20;
+  int CHAR = 20;
   /** RegularExpression Id. */
-  int CHAR = 21;
+  int SHORT = 21;
   /** RegularExpression Id. */
-  int SHORT = 22;
+  int INT = 22;
   /** RegularExpression Id. */
-  int INT = 23;
+  int LONG = 23;
   /** RegularExpression Id. */
-  int LONG = 24;
+  int FLOAT = 24;
   /** RegularExpression Id. */
-  int FLOAT = 25;
+  int DOUBLE = 25;
   /** RegularExpression Id. */
-  int DOUBLE = 26;
+  int SIGNED = 26;
   /** RegularExpression Id. */
-  int SIGNED = 27;
+  int UNSIGNED = 27;
   /** RegularExpression Id. */
-  int UNSIGNED = 28;
+  int CONST = 28;
   /** RegularExpression Id. */
-  int CONST = 29;
+  int VOLATILE = 29;
   /** RegularExpression Id. */
-  int VOLATILE = 30;
+  int CASE = 30;
   /** RegularExpression Id. */
-  int CASE = 31;
+  int DFLT = 31;
   /** RegularExpression Id. */
-  int DFLT = 32;
+  int IF = 32;
   /** RegularExpression Id. */
-  int IF = 33;
+  int ELSE = 33;
   /** RegularExpression Id. */
-  int ELSE = 34;
+  int SWITCH = 34;
   /** RegularExpression Id. */
-  int SWITCH = 35;
+  int WHILE = 35;
   /** RegularExpression Id. */
-  int WHILE = 36;
+  int FOR = 36;
   /** RegularExpression Id. */
-  int FOR = 37;
+  int DO = 37;
   /** RegularExpression Id. */
-  int DO = 38;
+  int GOTO = 38;
   /** RegularExpression Id. */
-  int GOTO = 39;
+  int CONTINUE = 39;
   /** RegularExpression Id. */
-  int CONTINUE = 40;
+  int BREAK = 40;
   /** RegularExpression Id. */
-  int BREAK = 41;
+  int RETURN = 41;
   /** RegularExpression Id. */
-  int RETURN = 42;
-  /** RegularExpression Id. */
-  int IDENTIFIER = 43;
+  int IDENTIFIER = 42;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -108,7 +106,6 @@ public interface FuckCConstants {
     "\"auto\"",
     "\"register\"",
     "\"static\"",
-    "\"extern\"",
     "\"typedef\"",
     "\"void\"",
     "\"char\"",
@@ -136,12 +133,12 @@ public interface FuckCConstants {
     "<IDENTIFIER>",
     "\"(\"",
     "\")\"",
+    "\"=\"",
     "\",\"",
+    "\";\"",
     "\"{\"",
     "\"}\"",
     "\":\"",
-    "\";\"",
-    "\"=\"",
     "\"[\"",
     "\"]\"",
     "\"*\"",

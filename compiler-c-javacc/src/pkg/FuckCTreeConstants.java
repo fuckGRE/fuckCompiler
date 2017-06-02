@@ -5,63 +5,69 @@ public interface FuckCTreeConstants
 {
   public int JJTSTART = 0;
   public int JJTTOP_UNIT = 1;
-  public int JJTEX_DECL = 2;
+  public int JJTVAR_FUN = 2;
   public int JJTFUN_DEF = 3;
-  public int JJTPARAM_TYPE_LIST = 4;
-  public int JJTPARAM_LIST = 5;
-  public int JJTPARAM_DECL = 6;
-  public int JJTCOMPOUND_STM = 7;
-  public int JJTSTMT_LIST = 8;
-  public int JJTSTMT = 9;
-  public int JJTIF_SWITCH_STMT = 10;
-  public int JJTCASE_DEFAULT_STMT = 11;
-  public int JJTWHILE_FOR_STMT = 12;
-  public int JJTJUMP_STMT = 13;
-  public int JJTCONSTANT_EXPR = 14;
-  public int JJTEXPR_STMT = 15;
-  public int JJTEXPR = 16;
-  public int JJTDECL_LIST = 17;
-  public int JJTDECLS = 18;
-  public int JJTDECL_SPECIFIERS = 19;
-  public int JJTSTORAGE_SPECIFIERS = 20;
-  public int JJTTYPE_MODIFIERS = 21;
-  public int JJTTYPE_SPECIFIERS = 22;
-  public int JJTTYPE_QUALIFIERS = 23;
-  public int JJTINIT_DECL_LIST = 24;
-  public int JJTINIT_DECL = 25;
-  public int JJTDECL = 26;
-  public int JJTDIRECT_DECL = 27;
-  public int JJTPTR = 28;
-  public int JJTINIT = 29;
-  public int JJTINIT_LIST = 30;
-  public int JJTASSIGN_EXPR = 31;
-  public int JJTASSIGN_OPERATOR = 32;
-  public int JJTUNARY_EXPR = 33;
-  public int JJTPOSTFIX_EXPR = 34;
-  public int JJTPREFIX_EXPR = 35;
-  public int JJTCOND_EXPR = 36;
-  public int JJTLOGICAL_OR_EXPR = 37;
-  public int JJTLOGICAL_AND_EXPR = 38;
-  public int JJTINCLUSIVE_OR_EXPR = 39;
-  public int JJTEXCLUSIVE_OR_EXPR = 40;
-  public int JJTAND_EXPR = 41;
-  public int JJTEQUAL_EXPR = 42;
-  public int JJTRELATION_EXPR = 43;
-  public int JJTSHIFT_EXPR = 44;
-  public int JJTADDITIVE_EXPR = 45;
-  public int JJTMULTIPLICATIVE_EXPR = 46;
-  public int JJTCONSTANT = 47;
+  public int JJTVAR_DEF = 4;
+  public int JJTCONST_DEF = 5;
+  public int JJTPARAM_TYPE_LIST = 6;
+  public int JJTPARAM_LIST = 7;
+  public int JJTPARAM_DECL = 8;
+  public int JJTBLOCK = 9;
+  public int JJTSTMT_LIST = 10;
+  public int JJTSTMT = 11;
+  public int JJTIF_SWITCH_STMT = 12;
+  public int JJTCASE_DEFAULT_STMT = 13;
+  public int JJTWHILE_FOR_STMT = 14;
+  public int JJTJUMP_STMT = 15;
+  public int JJTCONSTANT_EXPR = 16;
+  public int JJTEXPR_STMT = 17;
+  public int JJTEXPR = 18;
+  public int JJTDECL_LIST = 19;
+  public int JJTDECLS = 20;
+  public int JJTDECL_SPECIFIERS = 21;
+  public int JJTSTORAGE = 22;
+  public int JJTSTORAGE_SPECIFIERS = 23;
+  public int JJTTYPE_MODIFIERS = 24;
+  public int JJTTYPE_SPECIFIERS = 25;
+  public int JJTTYPE_QUALIFIERS = 26;
+  public int JJTINIT_DECL_LIST = 27;
+  public int JJTINIT_DECL = 28;
+  public int JJTDECL = 29;
+  public int JJTDIRECT_DECL = 30;
+  public int JJTPTR_ARR = 31;
+  public int JJTINIT = 32;
+  public int JJTINIT_LIST = 33;
+  public int JJTASSIGN_EXPR = 34;
+  public int JJTASSIGN_OPERATOR = 35;
+  public int JJTUNARY_EXPR = 36;
+  public int JJTPOSTFIX_EXPR = 37;
+  public int JJTPREFIX_EXPR = 38;
+  public int JJTCOND_EXPR = 39;
+  public int JJTLOGICAL_OR_EXPR = 40;
+  public int JJTLOGICAL_AND_EXPR = 41;
+  public int JJTINCLUSIVE_OR_EXPR = 42;
+  public int JJTEXCLUSIVE_OR_EXPR = 43;
+  public int JJTAND_EXPR = 44;
+  public int JJTEQUAL_EXPR = 45;
+  public int JJTRELATION_EXPR = 46;
+  public int JJTSHIFT_EXPR = 47;
+  public int JJTADDITIVE_EXPR = 48;
+  public int JJTMULTIPLICATIVE_EXPR = 49;
+  public int JJTCONSTANT = 50;
+  public int JJTNAME = 51;
 
 
   public String[] jjtNodeName = {
     "Start",
     "top_unit",
-    "ex_decl",
+    "var_fun",
     "fun_def",
+    "var_def",
+    "const_def",
     "param_type_list",
     "param_list",
     "param_decl",
-    "compound_stm",
+    "block",
     "stmt_list",
     "stmt",
     "if_switch_stmt",
@@ -74,6 +80,7 @@ public interface FuckCTreeConstants
     "decl_list",
     "decls",
     "decl_specifiers",
+    "storage",
     "storage_specifiers",
     "type_modifiers",
     "type_specifiers",
@@ -82,7 +89,7 @@ public interface FuckCTreeConstants
     "init_decl",
     "decl",
     "direct_decl",
-    "ptr",
+    "ptr_arr",
     "init",
     "init_list",
     "assign_expr",
@@ -102,6 +109,7 @@ public interface FuckCTreeConstants
     "additive_expr",
     "multiplicative_expr",
     "constant",
+    "name",
   };
 }
-/* JavaCC - OriginalChecksum=d744083f2e3ec943de021a91540caa47 (do not edit this line) */
+/* JavaCC - OriginalChecksum=b07d7c98d4030f0f6e5c604f21f38b95 (do not edit this line) */

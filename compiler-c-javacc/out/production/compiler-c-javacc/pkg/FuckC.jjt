@@ -43,7 +43,6 @@ public class FuckC extends Exception
 
      for(int i=0;i<symtab_pos;i++)
      {
-
        if(a.equals(symtab[i][0]))
          return true;
      }
@@ -83,7 +82,7 @@ public class FuckC extends Exception
 
   private static void var_assign()
   {
-    String t=arr[top-3];
+   String t=arr[top-3];
    pr.write(arr[top-3]+arr[top-2]+arr[top-1]+"\n");
    top-=3;
    arr[top++]=t;
@@ -97,7 +96,6 @@ public class FuckC extends Exception
     {
      pr_sym.print(symtab[i][0]+" "+symtab[i][1]+" "+symtab[i][2]+" "+symtab[i][3]+" "+symtab[i][4]+" "+
       symtab[i][5]+" "+symtab[i][6]+" \n");
-
     }
 
 }
@@ -105,7 +103,7 @@ public class FuckC extends Exception
   public static void main(String args []) throws ParseException, IOException, Exception
   {
 
-        FuckC parser =new FuckC(new FileInputStream("input.txt"));
+     FuckC parser =new FuckC(new FileInputStream("input.txt"));
 
      pr=new PrintWriter("output.txt");
      pr_sym=new PrintWriter("symtab.txt");
@@ -204,7 +202,6 @@ TOKEN :
   <AUTO     : "auto" >
 | <REGISTER : "register">
 | <STATIC   : "static">
-| <EXTERN   : "extern">
 | <TYPEDEF  : "typedef">
 | <VOID     : "void">
 | <CHAR     : "char">
@@ -247,7 +244,7 @@ SimpleNode Start() throws Exception:{}{
 int top_unit() throws Exception :
 {}
 {
- (ex_decl())+ <EOF>
+ (var_fun())+ <EOF>
   {
     System.out.print("\t\t\tAccepted \n");
     //throw new ParseException("Redeclaration");
@@ -258,31 +255,43 @@ int top_unit() throws Exception :
 
 }
 
-//Ex Declaration
-void ex_decl() throws Exception:
-{}
+//Declarations
+void var_fun() throws Exception:
+{Token t = null;}
 {
+  ( LOOKAHEAD(storage() type_specifiers() <IDENTIFIER> "(")
+//  函数定义
+    fun_def()  { System.out.print("\t\t\tEx Declaration \n"); }
+  |LOOKAHEAD(1)
+//   变量定义
+    var_def()  {
+    //TODO
 
-  fun_def()  { System.out.print("\t\t\tEx Declaration \n"); }
-
+    }
+//    常量定义 
+  | const_def(){
+    //TODO
+  })
 }
 
-//Function definition
+
+
+//函数定义
 void fun_def() throws Exception:
 {
     Token t=null;
 }
 {
-
  (
+    storage() type_specifiers()
    {
       System.out.print("\t\t\tPrevious sym tab: \n");
       display_symtab();
       symtab_pos=0;
    }
-   type_specifiers()
 
-    t=<IDENTIFIER> {symtab[symtab_pos][0]=t.image; symtab[symtab_pos][2]="fun";
+    t=<IDENTIFIER> {jjtThis.setText( t.image );
+                   symtab[symtab_pos][0]=t.image; symtab[symtab_pos][2]="fun";
                   symtab_pos++; //System.out.print("\t\t\tIDENT\n");
                    }
             "(" [param_type_list() ]")"
@@ -290,30 +299,67 @@ void fun_def() throws Exception:
                  symtab[symtab_pos-n_arg-1][3]=n_arg+"";
                  n_arg=0;
               }
-            compound_stm()
+            block()
    )
   {
    System.out.print("\t\t\tFunction definition\n");
   }
 }
 
+// 变量定义的语法
+void var_def():
+{String s1;
+}
+{
+    // storage()是可以省略的static
+    // type() 变量类型
+    // name() 变量名
+    // ["=" init=expr()] 可以省略的初始化表达式
+    // 不支持var = {1,2,3}这样子
+    // int x = 3, y;
+    storage()  type_specifiers() [ptr_arr()] s1 = name() ["=" expr()]
+        {
+        jjtThis.setText( s1 );
+//            TODO
+        }
+    ( "," name() ["=" expr()]
+        {
+//          TODO
+        }
+    )* ";"
+        {
+//        TODO
+        }
+}
+// #@@}
+
+//常量定义
+void const_def():
+{
+    Token t;
+}
+{
+    t = <CONST> type_specifiers() name() "=" expr() ";"
+        {
+        jjtThis.setText( t.image );
+//            TODO
+        }
+}
 
 
 //Parameter type list
 void param_type_list() : {}
 {
     param_list()
-      {
+    {
       System.out.print("\t\t\tParameter type List\n");
-     }
-
+    }
 }
 
 //Parameter List
 void param_list() : {}
 {
-    param_decl() (LOOKAHEAD(2) "," param_decl())*
-    {
+    param_decl() (LOOKAHEAD(2) "," param_decl())*{
       System.out.print("\t\t\tParameter List\n");
 
      }
@@ -333,7 +379,7 @@ void param_decl():
 }
 
 //Compound statement
-void compound_stm() : {}
+void block() : {}
 {
     "{" [ LOOKAHEAD(decl_list()) decl_list() ]
         [ stmt_list() ]
@@ -359,11 +405,11 @@ void stmt() : {}
 {
     ( LOOKAHEAD(2) case_default_stmt() |
       expr_stmt() |
-      compound_stm() |
+      block() |
       if_switch_stmt() |
       while_for_stmt() |
       jump_stmt() )
-      {
+   {
       System.out.print("\t\t\tStatement\n");
    }
 }
@@ -371,10 +417,12 @@ void stmt() : {}
 //if and switch
 void if_switch_stmt():
 {
+    Token t;
 }
 {
-  ( <IF> "(" expr() ")"
-              { label_stack[label_pos++]=label++;
+  ( t = <IF> "(" expr() ")"
+              {jjtThis.setText( t.image );
+              label_stack[label_pos++]=label++;
                  pr.write("\nif (not "+arr[top-1]+") \ngoto false_"+label_stack[label_pos-1]+"\n");
 
                 //label_count++;
@@ -383,14 +431,16 @@ void if_switch_stmt():
                   pr.write("goto end_"+label_stack[label_pos-1]+"\n");
                    pr.write("false_"+label_stack[label_pos-1]+":\n");
 
-                } [ LOOKAHEAD(2) <ELSE>
+                } [ LOOKAHEAD(2) t = <ELSE>
                  stmt() ]
                 {
+                    jjtThis.setText( t.image );
                   pr.write("end_"+label_stack[label_pos-1]+":\n");
                   label_pos--;
                 } |
-      <SWITCH> "(" expr()
+      t = <SWITCH> "(" expr()
       {
+        jjtThis.setText( t.image );
         switch_expr=arr[top-1];
         label_stack[label_pos++]=label++;
       } ")" stmt()
@@ -408,10 +458,12 @@ void case_default_stmt() : {Token t=null;}
 {
     ( t=<IDENTIFIER> ":"
     {
+       jjtThis.setText( t.image );
        pr.write(t.image+":\n");
     }  stmt() |
-      <CASE>  (t=<INTEGER_LITERAL> | t=<CHARACTER_LITERAL>)":"
+      t = <CASE>  (t=<INTEGER_LITERAL> | t=<CHARACTER_LITERAL>)":"
       {
+      jjtThis.setText( t.image );
         label_stack[label_pos++]=label++;
         pr.write("t="+t.image+"\n");
         pr.write("t="+switch_expr+"=="+t.image+"\n");
@@ -423,8 +475,9 @@ void case_default_stmt() : {Token t=null;}
         label_pos--;
       }
        |
-      <DFLT> ":"
+      t=<DFLT> ":"
       {
+      jjtThis.setText( t.image );
           pr.write("default: \n");
       } stmt() )
       {
@@ -435,10 +488,12 @@ void case_default_stmt() : {Token t=null;}
 //while , do…while, for
 void while_for_stmt():
 {
+    Token t;
 }
 {
-    ( <WHILE> "(" expr() ")"
+    ( t = <WHILE> "(" expr() ")"
     {
+        jjtThis.setText( t.image );
       label_stack[label_pos++]=label++;
        pr.write("begin_"+label_stack[label_pos-1]+":\n");
        pr.write("if (not "+arr[top-1]+")\n");
@@ -451,21 +506,23 @@ void while_for_stmt():
       label_pos--;
 
     } |
-      <DO>
+      t=<DO>
       {
+      jjtThis.setText( t.image );
       label_stack[label_pos++]=label++;
        pr.write("begin_"+label_stack[label_pos-1]+":\n");
 
-      } stmt() <WHILE> "(" expr() ")" ";"
+      } stmt() t = <WHILE> "(" expr() ")" ";"
       {
-
+        jjtThis.setText( t.image );
         pr.write("if ("+arr[top-1]+")\n");
         pr.write("goto begin_"+label_stack[label_pos-1]+"\n");
         pr.write("end_"+label_stack[label_pos-1]+":\n");
         label_pos--;
       } |
-      <FOR> "(" [ expr() ] ";"
+      t = <FOR> "(" [ expr() ] ";"
       {
+      jjtThis.setText( t.image );
       label_stack[label_pos++]=label++;
       pr.write("begin_"+label_stack[label_pos-1]+"\n");
       } [ expr() ]
@@ -503,6 +560,7 @@ void jump_stmt():
 {
   ( <GOTO> t=<IDENTIFIER> ";"
   {
+    jjtThis.setText( t.image );
     pr.write("goto "+t.image+"\n");
   } |
       <CONTINUE> ";"
@@ -547,7 +605,6 @@ void expr():
       System.out.print("\t\t\tExpression\n");
     }
 
-
 }
 
 //Declation list
@@ -560,8 +617,12 @@ void decl_list() : {}
 }
 
 
+
+
 void decls():
-{}
+{
+
+}
 {
     decl_specifiers() init_decl_list()  ";"
     {
@@ -588,15 +649,31 @@ void decl_specifiers():
 }
 
 
+void storage() :{Token t = null;}
+{
+        [ t=<STATIC> ]
+        {
+        if(t != null)
+            {
+            jjtThis.setText( t.image );
+          symtab[symtab_pos][4]=t.image;
+          temp[4]=t.image;
+          System.out.print("\t\t\tStorage class specifiers \n");
+          }
+        }
+}
+
 //Storage class specifiers
 void storage_specifiers() : {Token t=null;}
 {
-    ( t=<AUTO> | t=<REGISTER> | t=<STATIC> | t=<EXTERN>)
+    (t=<STATIC> )
     {
-
+        {
+        jjtThis.setText( t.image );
       symtab[symtab_pos][4]=t.image;
       temp[4]=t.image;
       System.out.print("\t\t\tStorage class specifiers \n");
+      }
     }
 }
 
@@ -606,6 +683,7 @@ void type_modifiers() :
 {
  (t=< SHORT >|t=< LONG >|t=< SIGNED >|t=< UNSIGNED >)
     {
+        jjtThis.setText( t.image );
       symtab[symtab_pos][2]=t.image;
       temp[2]=t.image;
 
@@ -620,6 +698,7 @@ void type_specifiers() :
     ( t=<VOID> | t=<CHAR> | t=<INT> | t=<FLOAT> | t=<DOUBLE>
     )
     {
+        jjtThis.setText( t.image );
       symtab[symtab_pos][1]=t.image;
       temp[1]=t.image;
 
@@ -632,6 +711,7 @@ void type_qualifiers() : {Token t=null;}
 {
     ( t=<CONST> | t=<VOLATILE> )
     {
+        jjtThis.setText( t.image );
       symtab[symtab_pos][3]=t.image;
       temp[3]=t.image;
 
@@ -683,7 +763,7 @@ void init_decl():
 //Declarator
 void decl() : {}
 {
-    [ ptr() ] direct_decl()
+    [ ptr_arr() ] direct_decl()
     {
       System.out.print("\t\t\tDeclarator\n");
       pointer_level=0;
@@ -695,6 +775,7 @@ void direct_decl():{Token t=null,t1=null;}
 {
     ( t=<IDENTIFIER>
      {
+        jjtThis.setText( t.image );
        if(check_redeclaration(t.image))
        throw new ParseException("error: redeclaration of '"+symtab[symtab_pos][1]+" "+t.image+"'");
      }
@@ -742,11 +823,20 @@ void direct_decl():{Token t=null,t1=null;}
 }
 
 //Pointer
-void ptr():
+void ptr_arr():
   { pointer_level++;
+    Token t;
   }
 {
-   "*" [ptr()]
+    LOOKAHEAD(2)
+    //定长数组
+    "[" t=<INTEGER_LITERAL> "]"
+            {
+                jjtThis.setText( t.image );
+//               TODO
+            }
+//         指针
+   |"*" 
    {
      symtab[symtab_pos][6]=pointer_level+"";
 
@@ -1050,7 +1140,17 @@ void constant():
 {
     (t=<INTEGER_LITERAL> | t=<FLOATING_POINT_LITERAL> | t=<CHARACTER_LITERAL> | t=<STRING_LITERAL>)
       {
+        jjtThis.setText( t.image );
        arr[top++]=t.image;
        System.out.print("\t\t\tConstant "+t.image+"\n");
       }
 }
+
+// 非终端符号name和<IDENTIFIER>是相同的
+// 将Token对象赋给了临时变量tok，并且返回tok中image属性的值作为name()的语义值
+String name():
+{ Token t; }
+{
+    t=<IDENTIFIER> { jjtThis.setText( t.image );return t.image; }
+}
+
