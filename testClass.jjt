@@ -1,0 +1,1595 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+ */
+
+options
+{
+  JDK_VERSION="1.5";
+	static =true;
+}
+
+PARSER_BEGIN(FuckC)
+package testclass;
+import java.util.*;
+import java.io.*;
+
+public class FuckC extends Exception {
+  private static class VariableType {  //变量
+	  String name; //名字
+    String type; //类型
+    String value; //值
+    int length; //数组长度
+    int size;  //单个字符大小（数组、指针）
+    int point_level; //指针级数
+    boolean isStatic; //是否为静态
+    boolean isArray; //是否为数组
+    boolean isPointer; //是否为指针
+    boolean isGlobal; //是否是全局变量
+    boolean isConst; //是否是常量
+    }
+
+    private static class FunctionType { //函数
+	    String name; //名字
+	    VariableType paramTab[] = new VariableType[10]; //参数表
+	    VariableType varTab[] = new VariableType[10]; //变量表
+	    int varTab_pos; //变量个数
+	    int paramTab_pos; //参数个数
+	    String returnType; //返回值类型
+	    VariableType returnValue; //返回值
+	    boolean isStatic; //是否为静态
+
+	    private boolean is_var_redeclare(String varName) { //检查变量是否重声明
+        int pos = is_var_declare_param(varName);
+        if (pos != -1)
+          return true;
+        pos = is_var_declare_var(varName);
+        if (pos != -1)
+          return true;
+        return false;
+	    }
+
+	    private int is_var_declare_param(String varName) { //检查参数是否声明
+      for (int i = 0; i < paramTab_pos; i++) {
+        if (varName.equals(paramTab[i].name))
+          return i;
+      }
+      return -1;
+	    }
+
+	    private int is_var_declare_var(String varName) { //检查变量是否在函数内声明
+	      for (int i = 0; i < varTab_pos; i++) {
+          if (varName.equals(varTab[i].name))
+            return i;
+	      }
+	      return -1;
+	    }
+
+	    private boolean is_var_declare(String varName) { //检查字符是否声明
+        int pos = is_var_declare_param(varName);
+        if (pos != -1)
+          return true;
+        pos = is_var_declare_var(varName);
+        if (pos != -1)
+          return true;
+        pos = is_globalVar_declare(varName);
+        if (pos != -1)
+          return true;
+        return false;
+	    }
+
+	    private void display_param_tab() { //打印参数表
+        for (int i = 0; i < paramTab_pos; i++) {
+          if (paramTab[i].isArray) {
+            pr_sym.print("   name: " + paramTab[i].name + " type: " + paramTab[i].type
+                    +" isArray: "+ paramTab[i].isArray + " length: " + paramTab[i].length
+                    + " isStatic: " + paramTab[i].isStatic + " isConst: " + paramTab[i].isConst
+                    + " isGlobal: " + paramTab[i].isGlobal + "\n");
+          } else {
+            pr_sym.print("   name: " + paramTab[i].name + " type: " + paramTab[i].type
+                    + " isStatic: " + paramTab[i].isStatic + " isConst: " + paramTab[i].isConst);
+            if(paramTab[i].isPointer)
+                pr_sym.print(" isPointer: " + paramTab[i].isPointer + " pointerLevel: " + paramTab[i].point_level);
+            pr_sym.print("\n");
+          }
+        }
+	    }
+
+	    private void display__var_tab() { //打印变量表
+        for (int i = 0; i < varTab_pos; i++) {
+          if (varTab[i].isArray) {
+            pr_sym.print("   name: " + varTab[i].name + " type: " + varTab[i].type
+                    +" isArray: " + varTab[i].isArray + " length: " + varTab[i].length
+                    + " isStatic: " + varTab[i].isStatic + " isConst: " + varTab[i].isConst
+                    + " isGlobal: " + varTab[i].isGlobal + "\n ");
+          } else {
+            pr_sym.print("   name: " + varTab[i].name + " type: " + varTab[i].type
+                    + " isStatic: " + varTab[i].isStatic + " isConst: " + varTab[i].isConst);
+            if(varTab[i].isPointer)
+                pr_sym.print(" isPointer: " + varTab[i].isPointer +  " pointerLevel: " + varTab[i].point_level);
+            pr_sym.print("\n");
+            }
+        }
+	    }
+    }
+
+    private static VariableType globalVarTab[] = new VariableType[100]; //全局变量+常量表
+    private static FunctionType funcTab[] = new FunctionType[100]; //函数表
+    private static VariableType tempDeclSym = new VariableType(); //临时变量，存储左值
+    private static VariableType tempCheckSym = new VariableType(); //临时变量，存储待检查值
+    private static FunctionType tempFunc = new FunctionType(); //临时函数
+    private static String switch_expr;
+    private static int label = 0;
+    private static int label_stack[] = new int[100];
+    private static int label_pos = 0;
+
+    private static int globalVarTab_pos = 0; //全局变量数量
+    private static int funcTab_pos = 0; //函数数量
+    private static int funcParam_index = 0; //正在检查的参数
+    private static int funcVar_count = 0; //同时声明多个变量的数量
+    private static String arr[] = new String[500];
+    private static int top = 0;
+    private static int i = 0;
+    private static PrintWriter pr, pr_sym;
+
+    private static void assign() {
+      pr.write("t" + i + "=" + arr[top - 3] + arr[top - 2] + arr[top - 1] + "\n");
+      top -= 3;
+      arr[top++] = "t" + i;
+      i++;
+    }
+
+    private static int is_func_declare(String funcName) { //检查函数是否声明
+      for (int i = 0; i < funcTab_pos; i++) {
+        if (funcName.equals(funcTab[i].name))
+          return i;
+      }
+      return -1;
+    }
+
+    private static int is_globalVar_declare(String varName) { //检查全局变量/常量是否声明
+      for (int i = 0; i < globalVarTab_pos; i++) {
+        if (varName.equals(globalVarTab[i].name))
+          return i;
+      }
+      return -1;
+    }
+
+    private static void u_assign() {
+      pr.write("t" + i + "=" + arr[top - 2] + arr[top - 1] + "\n");
+      top -= 2;
+      arr[top++] = "t" + i;
+      i++;
+    }
+
+    private static void mem() {
+      arr[top - 1] = "MEM(" + arr[top - 1] + ")";
+    }
+
+    private static void address() {
+      arr[top - 1] = "ADDRESS(" + arr[top - 1] + ")";
+    }
+
+    private static void assign_var(String tem) {
+      pr.write(tem + "=" + arr[top - 1] + "\n");
+      top -= 1;
+      arr[top++] = tem;
+    }
+
+    private static void var_assign() {
+      String t = arr[top - 3];
+      pr.write(arr[top - 3] + arr[top - 2] + arr[top - 1] + "\n");
+      top -= 3;
+      arr[top++] = t;
+    }
+
+    private static void display__global_var_tab() throws Exception {
+      pr_sym.print("GLOBAL_VARIABLE {\n");
+      for (int i = 0; i < globalVarTab_pos; i++) {
+        if (globalVarTab[i].isArray) {
+          pr_sym.print(" name: " + globalVarTab[i].name + " type: " + globalVarTab[i].type
+                  +"isArray: " + globalVarTab[i].isArray +  " length: " + globalVarTab[i].length
+                  + " isStatic: " + globalVarTab[i].isStatic + " isConst: " + globalVarTab[i].isConst
+                  + " isGlobal: " + globalVarTab[i].isGlobal + "\n");
+        } else {
+          pr_sym.print(" name: " + globalVarTab[i].name + " type: " + globalVarTab[i].type
+                  + " isStatic: " + globalVarTab[i].isStatic + " isConst: " + globalVarTab[i].isConst);
+          if(globalVarTab[i].isPointer)
+              pr_sym.print(" isPointer: " + globalVarTab[i].isPointer +  "pointerLevel: " + globalVarTab[i].point_level);
+          pr_sym.print("\n");
+        }
+      }
+      pr_sym.print("\n}\n");
+    }
+
+    private static void display_func_tab() throws Exception {
+      for (int i = 0; i < funcTab_pos; i++) {
+        pr_sym.print("FUNCTION {\n name: " + funcTab[i].name + " returnType: " + funcTab[i].returnType
+        + " returnValue: " + funcTab[i].returnValue.name+ " \n params: {\n");
+        funcTab[i].display_param_tab();
+        pr_sym.print(" }\n variables: {\n");
+        funcTab[i].display__var_tab();
+        pr_sym.print(" }\n}\n");
+      }
+    }
+
+    public static void main(String args[]) throws ParseException, IOException, Exception {
+      FuckC parser = new FuckC(new FileInputStream("input_addition.txt"));
+      pr = new PrintWriter("output_addition.txt");
+      pr_sym = new PrintWriter("symtab_addition.txt");
+      //while (true)
+      {
+        System.out.println("PCD_PACK_1 Reading from file ...");
+        try {
+          SimpleNode n = FuckC.Start();
+          if (n != null) {
+            n.dump(">>");
+            System.out.println("OK.");
+            pr.close();
+            pr_sym.close();
+          } else System.out.println("Goodbye.");
+/*        switch (FuckC.top_unit())
+      {
+        case 0 :
+        System.out.println("OK.");
+        pr.close();
+        pr_sym.close();
+        break;
+        case 1 :
+        System.out.println("Goodbye.");
+        break;
+        default :
+        break;
+      }*/
+          } catch (ParseException e) {
+              System.out.println("C Parser Version 0.1Alpha:  Encountered errors during parse.");
+              e.printStackTrace();
+          } catch (Exception e) {
+              System.out.println("NOK.");
+              System.out.println(e.getMessage());
+              FuckC.ReInit(System.in);
+          } catch (Error e) {
+              System.out.println("Oops.");
+              System.out.println(e.getMessage());
+              //break;
+          }
+      }
+    }
+}
+PARSER_END(FuckC)
+
+// 不生成token的扫描
+SKIP: {
+//跳过空白符
+ " "    //空格
+| "\t" //制表符
+| "\n" //回车
+| "\r" //换行
+|<"//" (~["\n", "\r"])*("\n" | "\r" | "\r\n") ?>    //跳过单行注释
+{
+  System.out.print("\t\t\tSkipped line comment\n");
+}
+/*废弃，不能这么写
+| <"*//*" (~[])* "*//*">*/
+|<"/*" (~["*"])*("*") + (~["/", "*"](~["*"])*("*") +)*"/" > //跳过块注释
+{
+  System.out.print("\t\t\tSkipped block comment\n");
+}
+
+}
+
+
+TOKEN: {
+//整型
+	<INTEGER_LITERAL:<DECIMAL_LITERAL > (["u", "U", "l", "L"])?|<HEX_LITERAL > (["u", "U", "l", "L"])?|<OCTAL_LITERAL > (["u", "U", "l", "L"])?>
+|   <#DECIMAL_LITERAL: ["1" - "9"](["0" - "9"])*>   //10进制
+|   <#HEX_LITERAL: "0"["x", "X"](["0" - "9", "a" - "f", "A" - "F"])+ >   //16进制
+|   <#OCTAL_LITERAL: "0" (["0" - "7"])*>   //8进制
+//浮点数
+|   <FLOATING_POINT_LITERAL: (["0" - "9"])+"." (["0" - "9"])*( < EXPONENT >)?(["f", "F", "d", "D"])?|"." (["0" - "9"])+( < EXPONENT >)?(["f", "F", "d", "D"])?|(["0" - "9"])+ < EXPONENT > (["f", "F", "d", "D"])?|(["0" - "9"])+( < EXPONENT >)?["f", "F", "d", "D"]>
+|   <#EXPONENT: ["e", "E"](["+", "-"])?(["0" - "9"])+ >
+//char
+|   <CHARACTER_LITERAL: "\'" (~["\'", "\\", "\n", "\r"]|"\\" (["n", "t", "b", "r", "f", "\\", "\'", "\""]))"\'" >
+//string
+|   <STRING_LITERAL: "\"" (~["\"", "\\", "\n", "\r"]|"\\" (["n", "t", "b", "r", "f", "\\", "\'", "\""]|(["\n", "\r"]|"\r\n")))*"\"" >
+}
+
+
+//扫描保留字
+TOKEN :
+{
+	<STATIC   : "static">
+| <VOID     : "void">
+| <CHAR     : "char">
+| <SHORT    : "short">
+| <INT      : "int">
+| <LONG     : "long">
+| <FLOAT    : "float">
+| <DOUBLE   : "double">
+| <SIGNED   : "signed">
+| <UNSIGNED : "unsigned">
+| < CONST   : "const" >
+| < VOLATILE: "volatile" >
+| < CASE    : "case" >
+| < DFLT    : "default" >   //DEFAULT关键字javaCC自用
+| < IF      : "if" >
+| < ELSE    : "else" >
+| < SWITCH  : "switch" >
+| < WHILE   : "while" >
+| < FOR     : "for" >
+| < DO      : "do" >
+| < GOTO    : "goto" >
+| < CONTINUE: "continue" >
+| < BREAK   : "break" >
+| < RETURN  : "return" >
+}
+
+//扫描标识符
+//神坑:必须在定义在保留字后面,因为javacc有最长匹配原则
+TOKEN : {
+    <IDENTIFIER: ["a"-"z", "A"-"Z", "_"] (["a"-"z", "A"-"Z", "_", "0"-"9"])*>
+}
+
+SimpleNode Start() throws Exception:{}{
+  top_unit() {
+    return jjtThis;
+  }
+}
+
+//Top unit
+int top_unit() throws Exception:
+{}
+{
+    (var_fun()) + < EOF >
+    {
+      System.out.print("\t\t\tAccepted \n");
+      display_func_tab();
+      display__global_var_tab();
+      globalVarTab_pos = 0;
+      funcTab_pos = 0;
+      return 0;
+    }
+}
+
+//Declarations
+void var_fun() throws Exception:
+{
+    Token t = null;
+}
+
+{
+		//函数定义
+    (
+	    LOOKAHEAD(storage()type_specifiers() < IDENTIFIER > "(") fun_def()
+	    {
+	      System.out.print("\t\t\tEx Declaration \n");
+			}
+			//全局变量定义
+	    |LOOKAHEAD(1) global_var_def()
+	    {
+	      System.out.println("\t\t\tGlobal Variable Defination\n");
+			}
+			//常量定义
+	    |const_def()
+	    {
+	      System.out.println("\t\t\tConstant Variable Deifination\n");
+			}
+    )
+}
+
+
+//函数定义
+void fun_def() throws Exception:
+{
+    Token t = null;
+}
+
+{
+		//函数类型
+    (
+      storage() type_specifiers()
+	    {
+	      funcTab[funcTab_pos] = new FunctionType();
+	      funcTab[funcTab_pos].isStatic = tempDeclSym.isStatic;
+	      funcTab[funcTab_pos].returnType = tempDeclSym.type + "";
+	      funcTab[funcTab_pos].varTab_pos = 0;
+	      funcTab[funcTab_pos].paramTab_pos = 0;
+	      funcTab[funcTab_pos].returnValue = new VariableType();
+	      funcTab[funcTab_pos].returnValue.name = "null";
+	      funcTab[funcTab_pos].returnValue.type = null;
+	      tempDeclSym.isPointer = false;
+	      tempDeclSym.point_level = 0;
+	      tempDeclSym.isArray = false;
+	      tempDeclSym.length = 0;
+	    }
+
+	    //函数名称
+	    t =<IDENTIFIER >
+	    {
+			  jjtThis.setText(t.image);
+			  int pos = is_func_declare(t.image);
+			  if (pos != -1)
+		      throw new ParseException("Function " + t.image + " has been declared");
+			  funcTab[funcTab_pos].name = t.image;
+	    }
+
+	    //参数表
+	    "("[func_param_type_list()] ")"
+	    {
+	      tempDeclSym.isPointer = false;
+	      tempDeclSym.point_level = 0;
+	      tempDeclSym.isArray = false;
+	      tempDeclSym.length = 0;
+	      tempDeclSym.isStatic = false;
+	      tempDeclSym.isConst = false;
+	    }
+
+	    //内容
+	    block()
+    )
+    {
+      funcTab_pos++;
+      pr.write("rtn\n\n");
+      System.out.print("\t\t\tFunction definition\n");
+    }
+}
+
+    // 全局变量定义
+void global_var_def():
+{
+    String s1;
+}
+
+{
+    storage() type_specifiers()[ptr_arr()] s1 = name()["=" expr()]
+    {
+      jjtThis.setText(s1);
+      int pos = is_globalVar_declare(s1);
+      if (pos == -1)
+        throw new ParseException("Global variable " + s1 + " has been declared");
+      globalVarTab[globalVarTab_pos].type = tempDeclSym.type + "";
+      globalVarTab[globalVarTab_pos].isStatic = tempDeclSym.isStatic;
+      globalVarTab[globalVarTab_pos].name = s1 + "";
+      globalVarTab[globalVarTab_pos].isGlobal = true;
+      globalVarTab_pos++;
+    }
+
+    (
+      "," s1 = name()["=" expr()]
+		  {
+		  pos = is_globalVar_declare(s1);
+		    if (pos != -1)
+	        throw new ParseException("Global variable " + s1 + " has been declared");
+		    globalVarTab[globalVarTab_pos].type = tempDeclSym.type + "";
+		    globalVarTab[globalVarTab_pos].isStatic = tempDeclSym.isStatic;
+		    globalVarTab[globalVarTab_pos].name = s1 + "";
+		    globalVarTab[globalVarTab_pos].isGlobal = true;
+		    globalVarTab_pos++;
+		  }
+    )*
+
+    ";"
+    {
+        System.out.println("Global variable definition");
+    }
+}
+
+
+//常量定义
+void const_def():
+{
+  Token t;
+  String s1;
+}
+
+{
+  t =<CONST > type_specifiers() s1 = name() "=" expr() ";"
+  {
+    jjtThis.setText(t.image);
+    int pos = is_globalVar_declare(s1);
+    if (pos != -1)
+      throw new ParseException("Const variable " + s1 + " has been declared");
+    globalVarTab[globalVarTab_pos].name = s1;
+    globalVarTab[globalVarTab_pos].type = tempDeclSym.type;
+    globalVarTab[globalVarTab_pos].isConst = true;
+    pr.write(s1 + "=" + arr[--top]);
+    System.out.println("\t\t\tConstant Global Variable\n");
+  }
+}
+
+
+//函数参数表
+void func_param_type_list():
+{}
+
+{
+  func_param_list()
+  {
+    System.out.print("\t\t\tParameter type List\n");
+  }
+}
+
+//函数参数
+void func_param_list():
+{}
+{
+  func_param_decl() (LOOKAHEAD(2) "," func_param_decl())*
+  {
+    System.out.print("\t\t\tParameter List\n");
+	}
+}
+
+//参数声明
+void func_param_decl():
+{}
+
+{
+  type_specifiers() param_decl()
+  {
+    System.out.print("\t\t\tParameter declaration\n");
+    funcTab[funcTab_pos].paramTab[funcTab[funcTab_pos].paramTab_pos].type = tempDeclSym.type + "";
+    funcTab[funcTab_pos].paramTab_pos++;
+    tempDeclSym.isPointer = false;
+    tempDeclSym.point_level = 0;
+    tempDeclSym.isArray = false;
+    tempDeclSym.length = 0;
+  }
+}
+
+//参数名称及特性声明
+void param_decl():
+{}
+
+{
+  [ptr_arr()]param_direct_decl()
+  {
+    funcTab[funcTab_pos].paramTab[funcTab[funcTab_pos].paramTab_pos] = new VariableType();
+    funcTab[funcTab_pos].paramTab[funcTab[funcTab_pos].paramTab_pos].length = tempDeclSym.length;
+    funcTab[funcTab_pos].paramTab[funcTab[funcTab_pos].paramTab_pos].isArray = tempDeclSym.isArray;
+    funcTab[funcTab_pos].paramTab[funcTab[funcTab_pos].paramTab_pos].point_level = tempDeclSym.point_level;
+    funcTab[funcTab_pos].paramTab[funcTab[funcTab_pos].paramTab_pos].isPointer = tempDeclSym.isPointer;
+    funcTab[funcTab_pos].paramTab[funcTab[funcTab_pos].paramTab_pos].name = tempDeclSym.name + "";
+    funcTab[funcTab_pos].paramTab[funcTab[funcTab_pos].paramTab_pos].size = tempDeclSym.size;
+    System.out.print("\t\t\tDeclarator\n");
+  }
+}
+
+//参数名称
+void param_direct_decl():
+{
+	Token t = null, t1 = null;
+}
+
+{
+	(t = < IDENTIFIER >
+  {
+    jjtThis.setText(t.image);
+		if (funcTab[funcTab_pos].is_var_redeclare(t.image))
+      throw new ParseException("Parameter " + t.image + " has been declared in function " + funcTab[funcTab_pos].name);
+		tempDeclSym.name = t.image;
+  }
+
+  //TODO: 多重指针
+	"(" param_decl() ")")
+	{
+
+	}
+
+	("[" t1 =<INTEGER_LITERAL > {tempDeclSym.length *= Integer.parseInt(t1.image);}"]")*
+	{
+    if (tempDeclSym.type != null) {
+	    switch (tempDeclSym.type) {
+	      case "int":
+	        tempDeclSym.size = 4;
+	        break;
+	      case "float":
+	        tempDeclSym.size = 4;
+	        break;
+	      case "double":
+	        tempDeclSym.size = 8;
+	        break;
+	      case "char":
+	        tempDeclSym.size = 1;
+	        break;
+	    }
+    }
+    System.out.print("\t\t\tDirect Declarator\n");
+  }
+}
+
+
+//语句块
+void block():
+{}
+
+{
+  "{"[LOOKAHEAD(decl_list()) decl_list()]
+  [stmt_list()]
+  "}"
+  {
+    System.out.print("\t\t\tCompound statement\n");
+  }
+}
+
+//语句列表
+void stmt_list():
+{}
+{
+  (stmt()) +
+  {
+	  System.out.print("\t\t\tstatement list\n");
+  }
+}
+
+
+//语句
+void stmt():
+{}
+
+{
+  (LOOKAHEAD(2) case_default_stmt() |
+    expr_stmt() |
+    block() |
+    if_switch_stmt() |
+    while_for_stmt() |
+    jump_stmt())
+  {
+    tempDeclSym.type = null;
+    System.out.print("\t\t\tStatement\n");
+  }
+}
+
+//if 和 switch 语句
+void if_switch_stmt():
+{
+  Token t;
+}
+
+{
+	//if-else语句
+	(t = < IF > "(" expr() ")"
+  {
+    jjtThis.setText(t.image);
+    label_stack[label_pos++] = label++;
+    pr.write("\nif (not " + arr[top - 1] + ") \ngoto false_" + label_stack[label_pos - 1] + "\n");
+  }
+
+  stmt()
+  {
+    pr.write("goto end_" + label_stack[label_pos - 1] + "\n");
+    pr.write("false_" + label_stack[label_pos - 1] + ":\n");
+  }
+	[LOOKAHEAD(2) t =<ELSE > stmt()]
+  {
+    jjtThis.setText(t.image);
+    pr.write("end_" + label_stack[label_pos - 1] + ":\n");
+    label_pos--;
+  }
+
+  //switch语句
+  |t =<SWITCH > "(" expr()
+  {
+    jjtThis.setText(t.image);
+    switch_expr = arr[top - 1];
+    label_stack[label_pos++] = label++;
+  }
+  ")" stmt()
+  {
+    pr.print("end_" + label_stack[label_pos - 1] + "\n");
+    label_pos--;
+  })
+  {
+    System.out.println("\t\t\tSelection statement ");
+  }
+}
+
+//case && default 语句
+void case_default_stmt():
+{
+  Token t = null;
+}
+
+{
+  (t = < IDENTIFIER > ":"
+  {
+	  jjtThis.setText(t.image);
+    pr.write(t.image + ":\n");
+  }
+  stmt() | t = < CASE > (t = < INTEGER_LITERAL > | t =<CHARACTER_LITERAL >)":"
+  {
+    jjtThis.setText(t.image);
+    label_stack[label_pos++] = label++;
+    pr.write("t=" + t.image + "\n");
+    pr.write("t=" + switch_expr + "==" + t.image + "\n");
+    pr.write("if(not t)\n");
+    pr.write("goto end_" + label_stack[label_pos - 1] + "\n");
+  }
+  stmt()
+  {
+    pr.write("end_" + label_stack[label_pos - 1] + "\n");
+    label_pos--;
+  }
+  |t =<DFLT > ":"
+  {
+    jjtThis.setText(t.image);
+    pr.write("default: \n");
+  }
+  stmt())
+  {
+    System.out.println("\t\t\tLabeled statement ");
+  }
+}
+
+//while , do…while, for
+void while_for_stmt():
+{
+  Token t;
+}
+
+{
+	//while
+  (t = < WHILE > "(" expr() ")"
+  {
+    jjtThis.setText(t.image);
+    label_stack[label_pos++] = label++;
+    pr.write("begin_" + label_stack[label_pos - 1] + ":\n");
+    pr.write("if (not " + arr[top - 1] + ")\n");
+    pr.write("goto end_" + label_stack[label_pos - 1] + "\n");
+  }
+  stmt()
+  {
+    pr.write("goto begin_" + label_stack[label_pos - 1] + "\n");
+    pr.write("end_" + label_stack[label_pos - 1] + "\n");
+    label_pos--;
+
+  }
+
+  //do-while
+  |t = < DO >
+  {
+    jjtThis.setText(t.image);
+    label_stack[label_pos++] = label++;
+    pr.write("begin_" + label_stack[label_pos - 1] + ":\n");
+  }
+  stmt() t =<WHILE > "(" expr() ")" ";"
+  {
+    jjtThis.setText(t.image);
+    pr.write("if (" + arr[top - 1] + ")\n");
+    pr.write("goto begin_" + label_stack[label_pos - 1] + "\n");
+    pr.write("end_" + label_stack[label_pos - 1] + ":\n");
+    label_pos--;
+  }
+
+  //for
+  |t =<FOR > "("[expr()] ";"
+  {
+    jjtThis.setText(t.image);
+    label_stack[label_pos++] = label++;
+    pr.write("begin_" + label_stack[label_pos - 1] + "\n");
+  }
+  [expr()]
+  {
+    pr.write("if(not " + arr[top - 1] + ")\n");
+    pr.write("goto end_" + label_stack[label_pos - 1] + "\n");
+  }
+  ";"
+  {
+    pr.write("goto body_" + label_stack[label_pos - 1] + "\n");
+    pr.write("inc_" + label_stack[label_pos - 1] + ":\n");
+  }
+  [expr()]")"
+  {
+    pr.write("goto begin_" + label_stack[label_pos - 1] + "\n");
+    pr.write("body_" + label_stack[label_pos - 1] + ":\n");
+  }
+  stmt()
+  {
+    pr.write("goto inc_" + label_stack[label_pos - 1] + "\n");
+    pr.write("end_" + label_stack[label_pos - 1] + "\n");
+    label_pos--;
+  })
+  {
+    System.out.println("\t\t\tIteration statement ");
+  }
+}
+
+//goto & continue & return & break
+void jump_stmt():
+{
+  Token t = null;
+}
+
+{
+	( < GOTO > t =<IDENTIFIER > ";"
+	{
+    jjtThis.setText(t.image);
+    pr.write("goto " + t.image + "\n");
+	}
+	|	<CONTINUE > ";"
+	{
+    pr.write("goto begin_" + label_stack[label_pos - 1] + "\n");
+	}
+	|<BREAK > ";"
+	{
+    pr.write("goto end_" + label_stack[label_pos - 1] + "\n");
+	}
+	|<RETURN > [expr()]";")
+	{
+    if( tempDeclSym.type == null) {
+      int pos = funcTab[funcTab_pos].is_var_declare_param(tempDeclSym.name);
+      if (pos != -1)
+        funcTab[funcTab_pos].returnValue = funcTab[funcTab_pos].paramTab[pos];
+      else {
+	      pos = funcTab[funcTab_pos].is_var_declare_var(tempDeclSym.name);
+        if (pos != -1)
+          funcTab[funcTab_pos].returnValue = funcTab[funcTab_pos].varTab[pos];
+        else
+          throw new ParseException("Return value " + tempDeclSym.name + " is not defined in function " + funcTab[funcTab_pos].name);
+      }
+      if (!(funcTab[funcTab_pos].returnType.equals(funcTab[funcTab_pos].returnValue.type)))
+        throw new ParseException("Return value " + tempDeclSym.name + " type is wrong in function " + funcTab[funcTab_pos].name);
+	  }
+    else {
+	    if(!funcTab[funcTab_pos].returnType.equals(tempDeclSym.type))
+        throw new ParseException("Return value " + tempDeclSym.name + " type is wrong in function " + funcTab[funcTab_pos].name);
+	    funcTab[funcTab_pos].returnValue.name = tempDeclSym.name + "";
+	    funcTab[funcTab_pos].returnValue.type = tempDeclSym.type + "";
+    }
+	  System.out.println("\t\t\tJump statement ");
+	}
+}
+
+//constant expression
+void constant_expr():
+{}
+{
+  cond_expr()
+  {
+    System.out.print("\t\t\tConstant expression\n");
+  }
+}
+
+//expression statement
+void expr_stmt():
+{}
+
+{
+  [expr()]";"
+  {
+    System.out.print("\t\t\tExpression statement\n");
+  }
+}
+
+//function call
+void funcall_stmt() throws Exception:
+{
+  Token t = null;
+}
+
+{
+  t = <IDENTIFIER > "(" {
+  //TODO: 输出函数信息，传参数
+  int pos = is_func_declare(t.image);
+  if (pos == -1)
+      throw new ParseException("Function " + t.image + " not declare");
+  tempFunc = funcTab[pos];
+  funcParam_index = 0;
+
+}
+  [funcall_params_list()]")" {}
+}
+
+
+void funcall_params_list() throws Exception:
+{}
+{
+  param_call() (LOOKAHEAD(2) "," param_call())*{}
+}
+
+void param_call() throws Exception:
+{
+	Token t = null;
+}
+
+{
+  t = <IDENTIFIER >
+  {
+	  int pos = funcTab[funcTab_pos].is_var_declare_param(t.image);
+	  if (pos != -1)
+	    tempCheckSym = funcTab[funcTab_pos].paramTab[pos];
+	  else {
+	    pos = funcTab[funcTab_pos].is_var_declare_var(t.image);
+	    if (pos != -1)
+	      tempCheckSym = funcTab[funcTab_pos].varTab[pos];
+	    else {
+	      pos = is_globalVar_declare(t.image);
+	      if (pos != -1)
+	        tempCheckSym = globalVarTab[pos];
+	      else
+	        throw new ParseException("Variable" + t.image + " not defined in function " + funcTab[funcTab_pos].name);
+	    }
+	  }
+	  if (!(tempCheckSym.type.equals(tempFunc.paramTab[funcParam_index].type)))
+	    throw new ParseException("Parameter " + t.image + "type not matched with function " + tempFunc.name);
+	  if (tempDeclSym.isArray) {
+	    if (!(tempCheckSym.type.equals(tempFunc.paramTab[funcParam_index].type) || tempDeclSym.length != tempFunc.paramTab[funcParam_index].length))
+	      throw new ParseException("Parameter " + t.image + "type not matched with function " + tempFunc.name);
+	  }
+  }
+}
+
+
+//expression
+void expr():
+{}
+{
+  assign_expr() ("," assign_expr())*
+  {
+    System.out.print("\t\t\tExpression\n");
+  }
+}
+
+//Declation list
+void decl_list():
+{}
+
+{
+	(LOOKAHEAD(decls()) decls())+
+  {
+    System.out.print("\t\t\tDeclaration list\n");
+  }
+}
+
+
+void decls():
+{}
+{
+	decl_specifiers() init_decl_list() ";"
+  {
+    System.out.print("\t\t\tDeclaration specifiers\n");
+  }
+}
+
+//Declation specifiers
+void decl_specifiers():
+{}
+
+{
+	(
+		storage_specifiers()[LOOKAHEAD(decl_specifiers()) decl_specifiers()]
+		|type_modifiers()[LOOKAHEAD(decl_specifiers()) decl_specifiers()]
+		|type_specifiers()[LOOKAHEAD(decl_specifiers()) decl_specifiers()]
+		|type_qualifiers()[LOOKAHEAD(decl_specifiers()) decl_specifiers()]
+  )
+  {
+    tempDeclSym.isStatic = false;
+    tempDeclSym.isConst = false;
+	  tempDeclSym.isArray = false;
+    funcVar_count = 0;
+    System.out.print("\t\t\tDeclaration specifier\n");
+  }
+}
+
+
+void storage():
+{
+	Token t = null;
+}
+{
+  [t =<STATIC > ]
+  {
+    if (t != null) {
+      jjtThis.setText(t.image);
+      tempDeclSym.isStatic = true;
+      System.out.print("\t\t\tStorage class specifiers \n");
+    }
+  }
+}
+
+//Storage class specifiers
+void storage_specifiers():
+{
+  Token t = null;
+}
+
+{
+  (t = < STATIC > )
+  {
+	  {
+      jjtThis.setText(t.image);
+      tempDeclSym.isStatic = true;
+      System.out.print("\t\t\tStorage class specifiers \n");
+	  }
+  }
+}
+
+//Type modifiers
+void type_modifiers():
+{
+  Token t = null;
+}
+{
+  //TODO: 类short int 处理
+  (t = < SHORT > | t =<LONG > | t =<SIGNED > | t =<UNSIGNED >)
+  {
+    jjtThis.setText(t.image);
+    tempDeclSym.type = t.image;
+    System.out.print("\t\t\tType modifiers. \n");
+  }
+}
+
+//Type specifiers
+void type_specifiers():
+{
+  Token t = null;
+}
+{
+  (t = < VOID > | t =<CHAR > | t =<INT > | t =<FLOAT > | t =<DOUBLE >)
+  {
+    jjtThis.setText(t.image);
+    tempDeclSym.type = t.image;
+    System.out.print("\t\t\tType specifiers. \n");
+  }
+}
+
+//Type Qualifiers
+void type_qualifiers():
+{
+  Token t = null;
+}
+{
+  (t = < CONST > )
+  {
+    jjtThis.setText(t.image);
+    tempDeclSym.isConst = true;
+    System.out.println("\t\t\tType qualifiers ");
+  }
+}
+
+
+//Init declarator list
+void init_decl_list():
+{}
+
+{
+  init_decl() ("," init_decl()
+  {
+    funcVar_count++;
+    funcTab[funcTab_pos].varTab[funcTab[funcTab_pos].varTab_pos - 1].type = tempDeclSym.type + "";
+  })*
+  {
+    funcTab[funcTab_pos].varTab[funcTab[funcTab_pos].varTab_pos - funcVar_count - 1].type = tempDeclSym.type + "";
+    System.out.print("\t\t\tInit declarator list\n");
+  }
+}
+
+//Init declarator
+void init_decl():
+{
+  Token t = null;
+}
+
+{
+  var_decl()
+  ["=" init()
+		{
+	    System.out.print("\t\t\tInit declarator\n");
+	    assign_var(funcTab[funcTab_pos].varTab[funcTab[funcTab_pos].varTab_pos].name);
+	  }
+  ]
+  {
+    funcTab[funcTab_pos].varTab_pos++;
+  }
+
+}
+
+
+void var_decl():
+{}
+{
+  [ptr_arr()]var_direct_decl()
+  {
+    System.out.print("\t\t\tDeclarator\n");
+    funcTab[funcTab_pos].varTab[funcTab[funcTab_pos].varTab_pos] = new VariableType();
+    funcTab[funcTab_pos].varTab[funcTab[funcTab_pos].varTab_pos].length = tempDeclSym.length;
+    funcTab[funcTab_pos].varTab[funcTab[funcTab_pos].varTab_pos].isArray = tempDeclSym.isArray;
+    funcTab[funcTab_pos].varTab[funcTab[funcTab_pos].varTab_pos].point_level = tempDeclSym.point_level;
+    funcTab[funcTab_pos].varTab[funcTab[funcTab_pos].varTab_pos].isPointer = tempDeclSym.isPointer;
+    funcTab[funcTab_pos].varTab[funcTab[funcTab_pos].varTab_pos].name = tempDeclSym.name + "";
+    funcTab[funcTab_pos].varTab[funcTab[funcTab_pos].varTab_pos].size = tempDeclSym.size;
+    tempDeclSym.point_level = 0;
+    tempDeclSym.isArray = false;
+    tempDeclSym.isStatic = false;
+    tempDeclSym.isPointer = false;
+    tempDeclSym.length = 0;
+    tempDeclSym.size = 0;
+  }
+}
+
+void var_direct_decl():
+
+{
+    Token t = null, t1 = null;
+}
+
+{
+  (t = < IDENTIFIER >
+  {
+    jjtThis.setText(t.image);
+    if (funcTab[funcTab_pos].is_var_redeclare(t.image))
+      throw new ParseException("Variable " + t.image + " has been declared in function " + funcTab[funcTab_pos].name);
+    tempDeclSym.name = t.image;
+  }
+                  |
+  "(" param_decl() ")"){}
+
+  ("[" t1 =<INTEGER_LITERAL > {tempDeclSym.length *= Integer.parseInt(t1.image);}"]")*
+  {
+
+    if (tempDeclSym.type != null) {
+	    switch (tempDeclSym.type) {
+        case "int":
+          tempDeclSym.size = 4;
+          break;
+        case "float":
+          tempDeclSym.size = 4;
+          break;
+        case "double":
+          tempDeclSym.size = 8;
+          break;
+        case "char":
+          tempDeclSym.size = 1;
+          break;
+      }
+    }
+    System.out.print("\t\t\tDirect Declarator\n");
+  }
+}
+
+//Pointer
+void ptr_arr():
+{
+	tempDeclSym.point_level++;
+	tempDeclSym.isPointer = true;
+  Token t;
+}
+
+{
+  LOOKAHEAD(2)
+  "[" t =<INTEGER_LITERAL > "]"
+  {
+    jjtThis.setText(t.image);
+    tempDeclSym.length = Integer.parseInt(t.image);
+    tempDeclSym.isArray = true;
+  }
+	//指针
+  | LOOKAHEAD(2) "*" ptr_arr(){}
+  | "*"
+  {
+    System.out.print("\t\t\tPointer. \n");
+  }
+}
+
+//Initializer
+void init():
+{}
+{
+  (assign_expr())
+  {
+    System.out.print("\t\t\tInitializer\n");
+  }
+}
+
+//Initializer list
+void init_list():
+{}
+
+{
+  init() (LOOKAHEAD(2) "," init())*
+  {
+    System.out.print("\t\t\tInitializer list\n");
+  }
+}
+
+
+//Assignment Expression
+void assign_expr():
+{}
+
+{
+  (
+	  LOOKAHEAD(unary_expr()assign_operator()) unary_expr() assign_operator()
+	  {
+	    if (arr[top - 1] == "=") {
+	      if (arr[top - 2].charAt(0) < 65) {
+	        throw new ParseException("error: lvalue required as left operand of assignment");
+	      }
+	    }
+	  }
+
+	  assign_expr()
+	  {
+	    var_assign();
+		}
+
+	  |LOOKAHEAD(3) cond_expr()
+  )
+  {
+    System.out.print("\t\t\tAssignment expression\n");
+  }
+}
+
+//Assignment operator
+void assign_operator():
+{
+  Token t = null;
+}
+
+{
+  (
+    t="="
+    { arr[top++]=t.image;
+    } | t="*="
+    { arr[top++]="="+arr[top-2]+"*";
+    } | t="/="
+    { arr[top++]="="+arr[top-2]+"/";
+    }| t="%="
+    { arr[top++]="="+arr[top-2]+"%";
+    }| t="+="
+    { arr[top++]="="+arr[top-2]+"+";
+    }| t="-="
+    { arr[top++]="="+arr[top-2]+"-";
+    }| t="<<="
+    { arr[top++]="="+arr[top-2]+"<< ";
+    } | t=">>="
+    { arr[top++]="="+arr[top-2]+">>";
+    } | t="&="
+    { arr[top++]="="+arr[top-2]+"&";
+    }| t="^="
+    { arr[top++]="="+arr[top-2]+"^";
+    } | t="|="
+    { arr[top++]="="+arr[top-2]+"|";
+    }
+  )
+  {
+    System.out.print("\t\t\tAssignment operator\n");
+  }
+}
+
+//Unary expression
+void unary_expr():
+{
+  Token t = null;
+}
+
+{
+  ( LOOKAHEAD(3) postfix_expr() |
+    t="++" { arr[top++]="1+"; } unary_expr(){String t1=arr[top-1]; u_assign(); assign_var(t1); } |
+    t="--" { arr[top++]="1-"; } unary_expr() {t1=arr[top-1]; u_assign(); assign_var(t1); } |
+    t="-" { arr[top++]="-"; } unary_expr() {t1=arr[top-1]; u_assign(); }|
+    t="&" { arr[top++]="&"; } unary_expr() {t1=arr[top-1]; u_assign();  }|
+    t="*" { arr[top++]="*"; } unary_expr() {t1=arr[top-1]; u_assign(); }|
+    t="~" { arr[top++]="~"; } unary_expr() {t1=arr[top-1]; u_assign();  }|
+    t="!" { arr[top++]="!"; } unary_expr() {t1=arr[top-1]; u_assign();  }
+  )
+  {
+    System.out.println("\t\t\tUnary expression ");
+  }
+}
+
+
+//Postfix expression
+void postfix_expr():
+{
+  Token t = null;
+}
+
+{
+  (
+		prefix_expr() ("[" expr() "]" {
+		//TODO:数组
+		arr[top - 1] = arr[top - 2] + "+" + arr[top - 1];
+		}
+		|t="++" { arr[top++]="+1"; String t1=arr[top-2]; u_assign(); assign_var(t1); }|
+		t="--" { arr[top++]="-1";  t1=arr[top-2]; u_assign(); assign_var(t1); } )*
+  )
+  {
+    System.out.print("\t\t\tPostfix expression\n");
+	}
+}
+
+//prefix expression
+void prefix_expr():
+{
+	Token t;
+}
+
+{
+	(
+		LOOKAHEAD(2) funcall_stmt()
+		{
+		  System.out.print("\t\t\tCall function\n");
+		}
+		|t = < IDENTIFIER >
+		{
+			int pos = is_globalVar_declare(t.image);
+			if (pos != -1) {
+			  if (globalVarTab[pos].isConst)
+			    throw new ParseException("Variable " + t.image + " cannot be assigned in function " + funcTab[funcTab_pos].name);
+			  else
+			    tempCheckSym = globalVarTab[pos];
+			} else {
+			  pos = funcTab[funcTab_pos].is_var_declare_param(t.image);
+			  if (pos != -1)
+			    tempCheckSym = funcTab[funcTab_pos].paramTab[pos];
+			  else {
+			    pos = funcTab[funcTab_pos].is_var_declare_var(t.image);
+			    if (pos != -1)
+			      tempCheckSym = funcTab[funcTab_pos].varTab[pos];
+			    else
+			      throw new ParseException("Variable " + t.image + " is not defined in function " + funcTab[funcTab_pos]);
+			  }
+		}
+		arr[top++] = t.image;}|constant() |"(" expr() ")"
+	)
+	{
+    System.out.print("\t\t\tPrimary expression\n");
+	}
+}
+
+//conditional expression
+void cond_expr():
+{}
+
+{
+  logical_or_expr()
+  {
+    System.out.print("\t\t\tConditional expression\n");
+  }
+}
+
+//logical or expression
+void logical_or_expr():
+{
+  Token t = null;
+}
+
+{
+  logical_and_expr()[
+  t = "||"
+	{
+	  arr[top++] = t.image;
+	}
+  logical_or_expr()
+  {
+    System.out.print("\t\t\tLogical OR expression\n");
+    assign();
+  }
+  ]
+}
+
+
+//logical and expression
+void logical_and_expr():
+{
+  Token t = null;
+}
+
+{
+  Inclusive_or_expr()[
+  t = "&&"
+  {
+    arr[top++] = t.image;
+	}
+  logical_and_expr()
+  {
+    System.out.print("\t\t\tLogical And expression\n");
+    assign();
+  }
+  ]
+}
+
+//Inclusive Or expression
+void Inclusive_or_expr():
+{
+  Token t = null;
+}
+
+{
+  exclusive_or_expr()[
+  t = "|"
+  {
+    arr[top++] = t.image;
+	}
+  Inclusive_or_expr()
+  {
+    System.out.print("\t\t\tInclusive OR expression\n");
+    assign();
+  }
+  ]
+}
+
+//Exclusive Or expression
+void exclusive_or_expr():
+{
+  Token t = null;
+}
+
+{
+  and_expr()[t = "^" {
+  arr[top++] = t.image;
+}
+  exclusive_or_expr()
+  {
+    System.out.print("\t\t\tExclusive OR expression\n");
+    assign();
+  }
+  ]
+}
+
+//And expression
+void and_expr():
+{
+  Token t = null;
+}
+
+{
+  equal_expr()[
+  t = "&"
+  {
+    arr[top++] = t.image;
+	}
+  and_expr()
+  {
+    System.out.print("\t\t\tAnd expression\n");
+    assign();
+  }
+  ]
+}
+
+//equality expression
+void equal_expr():
+{
+  Token t = null;
+}
+
+{
+  relation_expr()[
+  (t = "==" | t = "!=")
+  {
+		arr[top++] = t.image;
+	}
+  equal_expr()
+  {
+    System.out.print("\t\t\tEquality expression\n");
+    assign();
+  }
+  ]
+}
+
+//Relational expression
+void relation_expr():
+{
+    Token t = null;
+}
+
+{
+  shift_expr()[
+  (t = "<" | t = ">" | t = "<=" | t = ">=")
+  {
+    arr[top++] = t.image;
+	}
+  relation_expr()
+  {
+    System.out.print("\t\t\tRelational expression\n");
+    assign();
+  }
+  ]
+}
+
+//shift expression
+void shift_expr():
+{
+  Token t = null;
+}
+{
+  additive_expr()[
+  (t = "<<" | t = ">>")
+  {
+    arr[top++] = t.image;
+	}
+  shift_expr()
+  {
+    System.out.print("\t\t\tShift expression\n");
+    assign();
+  }
+  ]
+}
+
+//additive expression
+void additive_expr():
+{
+  Token t = null;
+}
+{
+  multiplicative_expr()[
+  (t = "+" | t = "-")
+  {
+    arr[top++] = t.image;
+	}
+  additive_expr()
+  {
+    System.out.print("\t\t\tAdditive expression\n");
+    assign();
+  }
+  ]
+}
+
+void multiplicative_expr():
+{
+  Token t = null;
+}
+{
+  unary_expr()[
+  (t = "*" | t = "/" | t = "%")
+  {
+    arr[top++] = t.image;
+	}
+  multiplicative_expr()
+  {
+		System.out.print("\t\t\tMultiplicative expression \n");
+    assign();
+	}
+  ]
+}
+
+//constant
+void constant():
+
+{
+    Token t = null;
+}
+
+{
+    (t = < INTEGER_LITERAL > )
+    {
+      jjtThis.setText(t.image);
+      arr[top++] = t.image;
+      tempDeclSym.name = t.image;
+      tempDeclSym.type = "int";
+      System.out.print("\t\t\tConstant " + t.image + "\n");
+    }
+    | (t = <CHARACTER_LITERAL>) {
+      jjtThis.setText(t.image);
+      arr[top++] = t.image;
+      tempDeclSym.name = t.image;
+      tempDeclSym.type = "char";
+      System.out.print("\t\t\tConstant " + t.image + "\n");
+    }
+    |(t =<FLOATING_POINT_LITERAL >)
+    {
+      jjtThis.setText(t.image);
+      arr[top++] = t.image;
+      tempDeclSym.name = t.image;
+      tempDeclSym.type = "float";
+      System.out.print("\t\t\tConstant " + t.image + "\n");
+    }
+    |(t =<STRING_LITERAL >)
+    {
+      jjtThis.setText(t.image);
+      arr[top++] = t.image;
+      tempDeclSym.name = t.image;
+      tempDeclSym.type = "char";
+      tempDeclSym.isPointer = true;
+      System.out.print("\t\t\tConstant " + t.image + "\n");
+    }
+}
+
+    // 非终端符号name和<IDENTIFIER>是相同的
+// 将Token对象赋给了临时变量tok，并且返回tok中image属性的值作为name()的语义值
+String name():
+{
+  Token t;
+}
+{
+  t =<IDENTIFIER > {jjtThis.setText(t.image); return t.image;}
+}
