@@ -1,0 +1,1811 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+ */
+
+options
+{
+  JDK_VERSION="1.5";
+  static =true;
+}
+
+PARSER_BEGIN(LoveC)
+import java.util.*;
+import java.io.*;
+
+public class LoveC extends Exception {
+    private static String switch_expr;
+    private static int label = 0;
+    private static int label_stack[] = new int[100];
+    private static int label_pos = 0;
+
+		private static FunctionType definingFunc;
+    private static Symtab symTab;
+    private static ErrorHandler errorHandler;
+    private static int loc;
+    private static int checkRes;
+    private static String arr[] = new String[500];
+    private static int top = 0;
+    private static int i = 0;
+    public static PrintWriter pr_ir, pr_sym;
+
+    private static void assign() {
+      pr_ir.write("\tt" + i + "=" + arr[top - 3] + arr[top - 2] + arr[top - 1] + "\n");
+      top -= 3;
+      arr[top++] = "t" + i;
+      i++;
+    }
+
+    private static void u_assign() {
+      pr_ir.write("\tt" + i + "=" + arr[top - 2] + arr[top - 1] + "\n");
+      top -= 2;
+      arr[top++] = "t" + i;
+      i++;
+    }
+
+    private static void mem() {
+      arr[top - 1] = "MEM(" + arr[top - 1] + ")";
+    }
+
+    private static void address() {
+      arr[top - 1] = "ADDRESS(" + arr[top - 1] + ")";
+    }
+
+    private static void assign_var(String tem) {
+      pr_ir.write("\t" + tem + "=" + arr[top - 1] + "\n");
+      top -= 1;
+      arr[top++] = tem;
+    }
+
+    private static void var_assign() {
+      String t = arr[top - 3];
+      pr_ir.write("\t" + arr[top - 3] + arr[top - 2] + arr[top - 1] + "\n");
+      top -= 3;
+      arr[top++] = t;
+    }
+
+    public static void main(String args[]) throws ParseException, IOException, Exception {
+      String name = "funcall";
+      LoveC parser = new LoveC(new FileInputStream(name+ ".txt"));
+      symTab.addSysFunc();
+      pr_ir = new PrintWriter("output" + name + ".txt");
+      pr_sym = new PrintWriter("symtab" + name + ".txt");
+      {
+        System.out.println("Reading from file ...");
+        try {
+          SimpleNode n = LoveC.Start();
+            if (errorHandler.hasError())
+               throw new ParseException();
+            if (errorHandler.hasWarning())
+							errorHandler.printWarning();
+          if (n != null) {
+            n.dump(">>");
+            System.out.println("OK!");
+            pr_ir.close();
+            pr_sym.close();
+          } else System.out.println("Goodbye!");
+          } catch (ParseException e) {
+              System.out.println("C Parser:  Encountered errors during parse.");
+              errorHandler.printError();
+              if (errorHandler.hasWarning())
+                errorHandler.printWarning();
+          } catch (Exception e) {
+              System.out.println("NOK.");
+              System.out.println(e.getMessage());
+              e.printStackTrace();
+              LoveC.ReInit(System.in);
+          } catch (Error e) {
+              System.out.println("Oops.");
+              System.out.println(e.getMessage());
+          }
+      }
+    }
+}
+PARSER_END(LoveC)
+
+// 不生成token的扫描
+SKIP: {
+//跳过空白符
+ " "    //空格
+| "\t" //制表符
+| "\n" //回车
+| "\r" //换行
+|<"//" (~["\n", "\r"])*("\n" | "\r" | "\r\n") ?>    //跳过单行注释
+{
+  System.out.print("\t\t\tSkipped line comment\n");
+}
+/*废弃，不能这么写
+| <"*//*" (~[])* "*//*">*/
+|<"/*" (~["*"])*("*") + (~["/", "*"](~["*"])*("*") +)*"/" > //跳过块注释
+{
+  System.out.print("\t\t\tSkipped block comment\n");
+}
+
+}
+
+
+TOKEN: {
+//整型
+  <INTEGER_LITERAL:<DECIMAL_LITERAL > (["u", "U", "l", "L"])?|<HEX_LITERAL > (["u", "U", "l", "L"])?|<OCTAL_LITERAL > (["u", "U", "l", "L"])?>
+|   <#DECIMAL_LITERAL: ["1" - "9"](["0" - "9"])*>   //10进制
+|   <#HEX_LITERAL: "0"["x", "X"](["0" - "9", "a" - "f", "A" - "F"])+ >   //16进制
+|   <#OCTAL_LITERAL: "0" (["0" - "7"])*>   //8进制
+//浮点数
+|   <FLOATING_POINT_LITERAL: (["0" - "9"])+"." (["0" - "9"])*( < EXPONENT >)?(["f", "F", "d", "D"])?|"." (["0" - "9"])+( < EXPONENT >)?(["f", "F", "d", "D"])?|(["0" - "9"])+ < EXPONENT > (["f", "F", "d", "D"])?|(["0" - "9"])+( < EXPONENT >)?["f", "F", "d", "D"]>
+|   <#EXPONENT: ["e", "E"](["+", "-"])?(["0" - "9"])+ >
+//char
+|   <CHARACTER_LITERAL: "\'" (~["\'", "\\", "\n", "\r"]|"\\" (["n", "t", "b", "r", "f", "\\", "\'", "\""]))"\'" >
+//string
+|   <STRING_LITERAL: "\"" (~["\"", "\\", "\n", "\r"]|"\\" (["n", "t", "b", "r", "f", "\\", "\'", "\""]|(["\n", "\r"]|"\r\n")))*"\"" >
+}
+
+
+//扫描保留字
+TOKEN :
+{
+  <STATIC   : "static">
+| <VOID     : "void">
+| <CHAR     : "char">
+| <SHORT    : "short">
+| <INT      : "int">
+| <LONG     : "long">
+| <FLOAT    : "float">
+| <DOUBLE   : "double">
+| <SIGNED   : "signed">
+| <UNSIGNED : "unsigned">
+| < CONST   : "const" >
+| < CASE    : "case" >
+| < DFLT    : "default" >   //DEFAULT关键字javaCC自用
+| < IF      : "if" >
+| < ELSE    : "else" >
+| < SWITCH  : "switch" >
+| < WHILE   : "while" >
+| < FOR     : "for" >
+| < DO      : "do" >
+| < GOTO    : "goto" >
+| < CONTINUE: "continue" >
+| < BREAK   : "break" >
+| < RETURN  : "return" >
+}
+
+//扫描标识符
+//神坑:必须在定义在保留字后面,因为javacc有最长匹配原则
+TOKEN : {
+    <IDENTIFIER: ["a"-"z", "A"-"Z", "_"] (["a"-"z", "A"-"Z", "_", "0"-"9"])*>
+}
+
+SimpleNode Start() throws Exception:{}{
+  top_unit() {
+    return jjtThis;
+  }
+}
+
+//Top unit
+int top_unit() throws Exception:
+{}
+{
+    (var_fun()) + < EOF >
+    {
+      System.out.print("\t\t\tAccepted \n");
+      symTab.display_func_tab();
+      symTab.display_global_var_tab();
+      return 0;
+    }
+}
+
+//Declarations
+void var_fun() throws Exception:
+{
+    Token t = null;
+}
+
+{
+    //函数定义
+    (
+      LOOKAHEAD(storage()type_specifiers() < IDENTIFIER > "(") fun_def()
+      {
+        System.out.print("\t\t\tFunction declaration \n");
+      }
+      //全局变量定义
+      |LOOKAHEAD(1) global_var_def()
+      {
+        System.out.println("\t\t\tGlobal variable defination\n");
+      }
+      //常量定义
+      |const_def()
+      {
+        System.out.println("\t\t\tConstant variable deifination\n");
+      }
+    )
+}
+
+
+// 全局变量定义
+void global_var_def() throws Exception:
+{
+    String type;
+    String name;
+    VariableType rhs = null, lhs;
+    Token t = null;
+    boolean isStatic;
+}
+
+{
+    isStatic = storage() type = type_specifiers() name = name()
+    {
+      jjtThis.setText((" name: " + name));
+      int pos = symTab.is_globalVar_declare(name);
+      if (pos != -1){
+        errorHandler.error(loc, "Global variable " + name + " has been declared");
+        return;
+      }
+      symTab.globalVarTab.add(new VariableType());
+      lhs = symTab.lastVar(symTab.globalVarTab);
+      lhs.type = type + "";
+      lhs.isStatic = isStatic;
+      lhs.name = name + "";
+      lhs.isGlobal = true;
+    }
+    ["=" rhs = expr()]{
+				checkRes = symTab.checkAssignType(lhs.type, rhs.type);
+				if(checkRes == 1)
+					errorHandler.warning(loc, "Loss will occur while assigning " + rhs.name + " to " + lhs.name);
+				else if(checkRes == 2)
+					errorHandler.error(loc, "Cannot assign " + rhs.name + " to " + lhs.name);
+				else
+					lhs.value = rhs.name + "";
+    }
+
+    (
+      "," name = name()
+      {
+        pos = symTab.is_globalVar_declare(name);
+        if (pos != -1){
+          errorHandler.error(loc, "Global variable " + name + " has been declared");
+          return;
+        }
+        symTab.globalVarTab.add(new VariableType());
+        lhs = symTab.lastVar(symTab.globalVarTab);
+        lhs.type = type + "";
+        lhs.isStatic = isStatic;
+        lhs.name = name + "";
+        lhs.isGlobal = true;
+      }
+    ["=" rhs = expr()]{
+      checkRes = symTab.checkAssignType(lhs.type, rhs.type);
+      if(checkRes == 1)
+      	errorHandler.warning(loc, "Loss will occur while assigning " + rhs.name + " to " + lhs.name);
+      else if(checkRes == 2)
+        errorHandler.error(loc, "Cannot assign " + rhs.name + " to " + lhs.name);
+      else
+        lhs.value = rhs.name + "";
+    }
+    )*
+
+    ";"
+    {
+        System.out.println("\t\t\tGlobal variable definition\n");
+    }
+}
+
+
+//常量定义
+void const_def() throws Exception:
+{
+  Token t;
+  String name;
+  String type;
+  VariableType rhs, lhs;
+}
+
+{
+  t =<CONST > type = type_specifiers() name = name()
+  {
+    jjtThis.setText((" type: "+ type));
+    jjtThis.setText((" name: "+ name));
+    int pos = symTab.is_globalVar_declare(name);
+    if (pos != -1){
+      errorHandler.error(loc, "Const variable " + name + " has been declared");
+      return;
+    }
+    symTab.globalVarTab.add(new VariableType());
+    lhs = symTab.lastVar(symTab.globalVarTab);
+    lhs.type = type + "";
+    lhs.name = name + "";
+    lhs.isGlobal = true;
+    lhs.isConst = true;
+    pr_ir.write("\t" + name + "=" + arr[--top]);
+    System.out.println("\t\t\tConstant variable definition\n");
+  }
+  "=" rhs = expr()
+  {
+    checkRes = symTab.checkAssignType(lhs.type, rhs.type);
+    if(checkRes == 1)
+      errorHandler.warning(loc, "Loss will occur while assigning " + rhs.name + " to " + lhs.name);
+    else if(checkRes == 2)
+      errorHandler.error(loc, "Cannot assign " + rhs.name + " to " + lhs.name);
+		else
+      lhs.value = rhs.name + "";
+  }
+   ";"
+}
+
+//函数定义
+void fun_def() throws Exception:
+{
+		String type;
+		String name;
+    Token t = null;
+    FunctionType function;
+    boolean isStatic;
+}
+
+{
+    //函数类型及函数名
+    (
+      isStatic = storage() type = type_specifiers() name = name()
+      {
+        int pos = symTab.is_func_declare(name);
+        if (pos != -1)
+          errorHandler.error(loc, "Function " + name + " has been declared");
+        else {
+	        symTab.funcTab.add(new FunctionType());
+	        function = symTab.lastFunc();
+	        function.isStatic = isStatic;
+	        function.returnType = type + "";
+	        function.returnValue = new VariableType();
+	        function.returnValue.name = "null";
+	        function.returnValue.type = null;
+	        function.name = name + "";
+	        definingFunc = function;
+	        pr_ir.write(name + ":\n");
+        }
+      }
+
+      //参数表
+      "(" [func_param_list()] ")"
+
+      //内容
+      block()
+    )
+    {
+      pr_ir.write("\trtn\n\n");
+      System.out.print("\t\t\tFunction definition\n");
+    }
+}
+
+
+//函数参数
+void func_param_list():
+{}
+{
+  func_param_decl() (LOOKAHEAD(2) "," func_param_decl())*
+  {
+    System.out.print("\t\t\tFunction parameter list\n");
+  }
+}
+
+//参数声明
+void func_param_decl():
+{
+	String type;
+	VariableType var = null;
+}
+
+{
+  type = type_specifiers() var =  param_decl()
+  {
+    if (definingFunc.is_var_redeclare(var.name)){
+      errorHandler.error(loc, "Parameter " + var.name + " has been declared in function " + definingFunc.name);
+      return;
+    }
+    else {
+      var.type = type + "";
+      definingFunc.paramTab.add(var);
+    }
+    System.out.print("\t\t\tFunction parameter declaration\n");
+  }
+}
+
+//参数名称及特性声明
+VariableType param_decl():
+{
+	VariableType var = new VariableType();
+}
+{
+  [ptr_arr(var)] param_direct_decl(var){
+    return var;
+  }
+}
+
+//参数名称
+void param_direct_decl(VariableType var):
+{
+  Token t = null, t1 = null;
+  String name;
+}
+
+{
+  (name = name() )
+  {
+    var.name = name;
+  }
+
+  ("[" t1 =<INTEGER_LITERAL > {}"]")*
+  {
+    if (var.type != null) {
+      switch (var.type) {
+        case "int":
+          var.size = 4;
+          break;
+        case "float":
+          var.size = 4;
+          break;
+        case "double":
+          var.size = 8;
+          break;
+        case "char":
+          var.size = 1;
+          break;
+      }
+    }
+  }
+}
+
+
+boolean storage():
+{
+  Token t = null;
+}
+{
+  [t =<STATIC > ]
+  {
+    if (t != null) {
+      jjtThis.setText((" type: "+t.image));
+      System.out.print("\t\t\tStorage class specifiers \n");
+      return true;
+    }
+    else
+      return false;
+  }
+}
+
+
+//语句块
+void block() throws Exception:
+{}
+
+{
+  "{"[LOOKAHEAD(decl_list()) decl_list()]
+  [stmt_list()]
+  "}"
+  {
+    System.out.print("\t\t\tCompound statements\n");
+  }
+}
+
+//Declation list
+void decl_list() throws Exception:
+{}
+
+{
+  (LOOKAHEAD(decls()) decls())+
+  {
+    System.out.print("\t\t\tVariable declaration list\n");
+  }
+}
+
+
+void decls() throws Exception:
+{
+	VariableType typeVar = new VariableType();
+}
+{
+  decl_specifiers(typeVar) init_decl_list(typeVar) ";"
+  {
+    System.out.print("\t\t\tVariable declaration specifiers\n");
+  }
+}
+
+//Declation specifiers
+void decl_specifiers(VariableType typeVar):
+{
+	String type = null;
+}
+
+{
+  (
+    storage_specifiers(typeVar)[LOOKAHEAD(decl_specifiers(typeVar)) decl_specifiers(typeVar)]
+    |type = type_specifiers()[LOOKAHEAD(decl_specifiers(typeVar)) decl_specifiers(typeVar)]
+    |type_qualifiers(typeVar)[LOOKAHEAD(decl_specifiers(typeVar)) decl_specifiers(typeVar)]
+  )
+  {
+    if(type !=null)
+      typeVar.type = type + "";
+  }
+}
+
+//Storage class specifiers
+void storage_specifiers(VariableType typeVar):
+{
+  Token t = null;
+}
+
+{
+  (t = < STATIC > )
+  {
+    {
+      jjtThis.setText((" type: "+t.image));
+      typeVar.isStatic = true;
+      System.out.print("\t\t\tStorage class specifiers \n");
+    }
+  }
+}
+
+//Type specifiers
+String type_specifiers():
+{
+  Token t = null;
+}
+{
+  (t = < VOID > | t =<CHAR > | t =<INT > | t =<FLOAT > | t =<DOUBLE >)
+  {
+    jjtThis.setText((" type: "+t.image));
+    System.out.print("\t\t\tType specifiers. \n");
+    return t.image;
+  }
+}
+
+//Type Qualifiers
+void type_qualifiers(VariableType typeVar):
+{
+  Token t = null;
+}
+{
+  (t = < CONST > )
+  {
+    jjtThis.setText((" type: "+t.image));
+    typeVar.isConst = true;
+    System.out.println("\t\t\tType qualifiers ");
+  }
+}
+
+
+//Init declarator list
+void init_decl_list(VariableType typeVar) throws Exception:
+{}
+
+{
+  init_decl(typeVar) ("," init_decl(typeVar))*
+  {
+    System.out.print("\t\t\tVariable init declarator list\n");
+  }
+}
+
+//Init declarator
+void init_decl(VariableType typeVar) throws Exception:
+{
+  Token t = null;
+  VariableType lhs, rhs;
+}
+
+{
+  lhs = var_decl()
+  {
+      if (definingFunc.is_var_redeclare(lhs.name)){
+        errorHandler.error(loc, "Variable " + lhs.name + " has been declared in function " + definingFunc.name);
+        return;
+      }
+      lhs.isStatic = typeVar.isStatic;
+      lhs.isConst = typeVar.isConst;
+      lhs.type = typeVar.type + "";
+      definingFunc.varTab.add(lhs);
+
+  }
+  [t = "=" rhs = init()
+    {
+      jjtThis.setText((" value: "+t.image));
+      checkRes = symTab.checkAssignType(lhs.type, rhs.type);
+      if(checkRes == 1)
+        errorHandler.warning(loc, "Loss will occur while assigning " + rhs.name + " to " + lhs.name);
+      else if(checkRes == 2)
+        errorHandler.error(loc, "Cannot assign " + rhs.name + " to " + lhs.name);
+			else
+        lhs.value = rhs.name + "";
+      System.out.print("\t\t\tVariable init declarator\n");
+      assign_var(lhs.name);
+    }
+  ]
+}
+
+
+VariableType var_decl():
+{
+	VariableType var = new VariableType();
+}
+{
+  [ptr_arr(var)]var_direct_decl(var)
+  {
+    System.out.print("\t\t\tVariable declarator\n");
+    return var;
+  }
+}
+
+void var_direct_decl(VariableType var):
+
+{
+    Token t = null, t1 = null;
+    String name;
+}
+
+{
+  name = name()
+  {
+    jjtThis.setText((" name: " + name));
+    var.name = name;
+  }
+
+  ("[" t1 =<INTEGER_LITERAL > {}"]")*
+  {
+
+    if (var.type != null) {
+      switch (var.type) {
+        case "int":
+          var.size = 4;
+          break;
+        case "float":
+          var.size = 4;
+          break;
+        case "double":
+          var.size = 8;
+          break;
+        case "char":
+          var.size = 1;
+          break;
+      }
+    }
+    System.out.print("\t\t\tVariable direct declarator\n");
+  }
+}
+
+//Pointer
+void ptr_arr(VariableType var):
+{
+  var.point_level++;
+  var.isPointer = true;
+  Token t = null;
+}
+
+{
+  LOOKAHEAD(2)
+  "[" t =<INTEGER_LITERAL > "]"
+  {
+    jjtThis.setText((" type:[]  size: "+t.image));
+    var.length = Integer.parseInt(t.image);
+    var.isArray = true;
+  }
+  //指针
+  | LOOKAHEAD(2) "*" ptr_arr(var){}
+  | t = "*"
+  {
+    jjtThis.setText((" type: "+ t.image));
+    System.out.print("\t\t\tPointer or Array \n");
+  }
+}
+
+//Initializer
+VariableType init() throws Exception:
+{
+	VariableType var = null;
+}
+{
+  (var = assign_expr())
+  {
+    return var;
+    System.out.print("\t\t\tVariable initializer\n");
+  }
+}
+
+//Initializer list
+void init_list() throws Exception:
+{}
+
+{
+  init() (LOOKAHEAD(2) "," init())*
+  {
+    System.out.print("\t\t\tVariable initializer list\n");
+  }
+}
+
+
+
+
+//语句列表
+void stmt_list() throws Exception:
+{}
+{
+  (stmt()) +
+  {
+    System.out.print("\t\t\tstatement list\n");
+  }
+}
+
+
+//语句
+void stmt() throws Exception:
+{}
+
+{
+  (LOOKAHEAD(2) case_default_stmt() |
+    expr_stmt() |
+    block() |
+    if_switch_stmt() |
+    while_for_stmt() |
+    jump_stmt())
+  {
+    System.out.print("\t\t\tStatement\n");
+  }
+}
+
+//if 和 switch 语句
+void if_switch_stmt() throws Exception:
+{
+  Token t;
+  VariableType var = null;
+}
+
+{
+  //if-else语句
+  (t = < IF > "(" expr() ")"
+  {
+    jjtThis.setText((" type: "+t.image));
+    label_stack[label_pos++] = label++;
+    pr_ir.write("\tif (not " + arr[top - 1] + ") \n\tgoto FALSE_" + label_stack[label_pos - 1] + "\n");
+  }
+
+  stmt()
+  {
+    pr_ir.write("\tgoto END_" + label_stack[label_pos - 1] + "\n");
+    pr_ir.write("FALSE_" + label_stack[label_pos - 1] + ":\n");
+  }
+  [LOOKAHEAD(2) t =<ELSE > stmt()]
+  {
+    jjtThis.setText((" type: "+t.image));
+    pr_ir.write("END_" + label_stack[label_pos - 1] + ":\n");
+    label_pos--;
+  }
+
+  //switch语句
+  |t =<SWITCH > "(" var = expr()
+  {
+    if(!var.isIntorChar())
+      errorHandler.error(loc, "Variable " + var.name + " cannot be used in 'switch' , should be an Integer or character");
+    jjtThis.setText((" type: "+t.image));
+    switch_expr = arr[top - 1];
+    label_stack[label_pos++] = label++;
+  }
+  ")" stmt()
+  {
+    pr_ir.print("END_" + label_stack[label_pos - 1] + ":\n");
+    label_pos--;
+  })
+  {
+    System.out.println("\t\t\tSelection statement ");
+  }
+}
+
+//case && default 语句
+void case_default_stmt() throws Exception:
+{
+  Token t = null;
+  Token type = null;
+  String name;
+  VariableType var = null;
+}
+
+{
+  (name = name() ":"
+   {
+    int pos = definingFunc.is_var_declare_param(name);
+    if (pos != -1)
+      var = symTab.get(definingFunc.paramTab, pos);
+    else {
+      pos = definingFunc.is_var_declare_var(name);
+	    if (pos != -1)
+	      var = symTab.get(definingFunc.varTab, pos);
+	    else {
+	      pos = symTab.is_globalVar_declare(name);
+	      if (pos != -1)
+	        var = symTab.get(symTab.globalVarTab, pos);
+	      else
+	        errorHandler.error(loc, "Variable " + name + " is not defined in function " + definingFunc.name);
+      }
+    }
+    if(var == null || var.value == null)
+      errorHandler.error(loc, "Variable " + name + " is not initialized in function " + definingFunc.name);
+    jjtThis.setText((" name: "+name));
+    pr_ir.write(name + ":\n");
+  }
+  stmt()
+  | type = < CASE > (t = < INTEGER_LITERAL > | t =<CHARACTER_LITERAL >)":"
+  {
+    if(type != null){
+      jjtThis.setText((" value: "+t.image));
+      jjtThis.setText((" type: "+type.image));
+    }
+    label_stack[label_pos++] = label++;
+    pr_ir.write("\tt=" + switch_expr + "==" + t.image + "\n");
+    pr_ir.write("\tif(not t)\n");
+    pr_ir.write("\tgoto END_" + label_stack[label_pos - 1] + "\n");
+  }
+  stmt()
+  {
+    pr_ir.write("END_" + label_stack[label_pos - 1] + ":\n");
+    label_pos--;
+  }
+  |type =<DFLT > ":"
+  {
+    jjtThis.setText((" type: "+type.image));
+    pr_ir.write("DEFAULT_" + label_stack[label_pos - 1] + ": \n");
+  }
+  stmt())
+  {
+    System.out.println("\t\t\tLabeled statement ");
+  }
+}
+
+//while , do…while, for
+void while_for_stmt() throws Exception:
+{
+  Token t;
+}
+
+{
+  //while
+  (t = < WHILE >
+   {
+     jjtThis.setText((" type: "+t.image));
+     label_stack[label_pos++] = label++;
+     pr_ir.write("BEGIN_" + label_stack[label_pos - 1] + ":\n");
+   }"(" expr() ")"
+  {
+    pr_ir.write("\tif (not " + arr[top - 1] + ")\n");
+    pr_ir.write("\tgoto END_" + label_stack[label_pos - 1] + "\n");
+  }
+  stmt()
+  {
+    pr_ir.write("\tgoto BEGIN_" + label_stack[label_pos - 1] + "\n");
+    pr_ir.write("END_" + label_stack[label_pos - 1] + ":\n");
+    label_pos--;
+
+  }
+
+  //do-while
+  |t = < DO >
+  {
+    jjtThis.setText((" type: "+t.image));
+    label_stack[label_pos++] = label++;
+    pr_ir.write("BEGIN_" + label_stack[label_pos - 1] + ":\n");
+  }
+  stmt() t =<WHILE > "(" expr() ")" ";"
+  {
+    jjtThis.setText((" type: "+t.image));
+    pr_ir.write("\tif (" + arr[top - 1] + ")\n");
+    pr_ir.write("\tgoto BEGIN_" + label_stack[label_pos - 1] + "\n");
+    pr_ir.write("END_" + label_stack[label_pos - 1] + ":\n");
+    label_pos--;
+  }
+
+  //for
+  |t =<FOR > "("[expr()] ";"
+  {
+    jjtThis.setText((" type: "+t.image));
+    label_stack[label_pos++] = label++;
+    pr_ir.write("BEGIN_" + label_stack[label_pos - 1] + ":\n");
+  }
+  [expr()]
+  {
+    pr_ir.write("\tif(not " + arr[top - 1] + ")\n");
+    pr_ir.write("\tgoto END_" + label_stack[label_pos - 1] + "\n");
+  }
+  ";"
+  {
+    pr_ir.write("\tgoto body_" + label_stack[label_pos - 1] + "\n");
+    pr_ir.write("inc_" + label_stack[label_pos - 1] + ":\n");
+  }
+  [expr()]")"
+  {
+    pr_ir.write("\tgoto BEGIN_" + label_stack[label_pos - 1] + "\n");
+    pr_ir.write("body_" + label_stack[label_pos - 1] + ":\n");
+  }
+  stmt()
+  {
+    pr_ir.write("goto inc_" + label_stack[label_pos - 1] + "\n");
+    pr_ir.write("END_" + label_stack[label_pos - 1] + ":\n");
+    label_pos--;
+  })
+  {
+    System.out.println("\t\t\tIteration statement ");
+  }
+}
+
+//goto & continue & return & break
+void jump_stmt() throws Exception:
+{
+  Token t = null;
+  Token type = null;
+  int checkRes;
+  VariableType var = null;
+}
+
+{
+  ( type = < GOTO > t =<IDENTIFIER > ";"
+  {
+    jjtThis.setText((" type: "+type.image));
+    jjtThis.setText((" name: "+t.image));
+    pr_ir.write("\tgoto " + t.image + "\n");
+  }
+  | type = <CONTINUE > ";"
+  {
+    jjtThis.setText((" type: "+type.image));
+    pr_ir.write("\tgoto BEGIN_" + label_stack[label_pos - 1] + "\n");
+  }
+  |type = <BREAK > ";"
+  {
+    jjtThis.setText((" type: "+type.image));
+    pr_ir.write("\tgoto END_" + label_stack[label_pos - 1] + "\n");
+  }
+  |type = <RETURN > [var = expr()
+  {
+    jjtThis.setText((" type: "+type.image));
+    assign_var("v0");
+    if (var.isConst){
+      checkRes = symTab.checkAssignType(definingFunc.returnType, var.type);
+      if(checkRes == 2)
+        errorHandler.error(loc, "Return value " + var.name + " type is wrong in function " + definingFunc.name);
+      else if(checkRes == 1)
+        errorHandler.error(loc, "Loss will occur " + "while using " + var.name + " as return value in function " + definingFunc.name);
+      definingFunc.returnValue.type = var.type + "";
+      definingFunc.returnValue.value = var.name + "";
+    }
+    else{
+      int pos = definingFunc.is_var_declare_param(var.name);
+      if (pos != -1)
+        definingFunc.returnValue = symTab.get(definingFunc.paramTab, pos);
+      else {
+        pos = definingFunc.is_var_declare_var(var.name);
+        if (pos != -1)
+          definingFunc.returnValue = symTab.get(definingFunc.varTab, pos);
+        else
+          errorHandler.error(loc, "Return value " + var.name + " is not defined in function " + definingFunc.name);
+      }
+       checkRes = symTab.checkAssignType(definingFunc.returnType, var.type);
+       if(checkRes == 2)
+         errorHandler.error(loc, "Return value " + var.name + " type is wrong in function " + definingFunc.name);
+       else if(checkRes == 1)
+         errorHandler.error(loc, "Loss will occur " + "while using " + var.name + " as return value in function " + definingFunc.name);
+	   }
+
+  }
+  ]";")
+  {
+    System.out.println("\t\t\tJump statement ");
+  }
+}
+
+//expression statement
+void expr_stmt() throws Exception:
+{}
+
+{
+  [expr()]";"
+  {
+    System.out.print("\t\t\tExpression statement\n");
+  }
+}
+
+//function call
+void funcall_stmt(VariableType returnVar) throws Exception:
+{
+  Token t = null;
+  String name;
+  FunctionType function;
+}
+
+{
+  name = name() "(" {
+  jjtThis.setText((" name: "+name));
+  int pos = symTab.is_func_declare(name);
+  if (pos == -1){
+    errorHandler.error(loc, "Function " + name + " is not declared");
+    returnVar = null;
+    return;
+  }
+  else
+    function = symTab.getFunc(pos);
+  pr_ir.write("\tcall " + name + "(");
+	}
+  [funcall_params_list(function)]")"
+  {
+    System.out.print("\t\t\tFunction call\n");
+    pr_ir.write(")\n");
+    arr[top ++] = "v0";
+  }
+  {
+    returnVar.name = function.name;
+    returnVar.type = function.returnType;
+    returnVar.isConst = true;
+  }
+}
+
+
+void funcall_params_list(FunctionType function) throws Exception:
+{
+  Token t = null;
+  int param_index = 0;
+  String param_name;
+}
+{
+  param_name = param_call(function, param_index)
+  {
+    pr_ir.write(param_name);
+    param_index++;
+  }(LOOKAHEAD(2) "," param_name = param_call(function, param_index)
+  {
+    pr_ir.write(", " + param_name);
+    param_index++;
+  })*{
+    if (param_index != function.getParamNum())
+      errorHandler.error(loc, "Parameter num is wrong while calling function " + function.name);
+  }
+}
+
+String param_call(FunctionType function, int index) throws Exception:
+{
+  Token t = null;
+  VariableType checkParam = new VariableType();  
+  String name;
+}
+
+{
+  (
+	name = name()
+	{
+	  jjtThis.setText((" name: "+name));
+	  int pos = definingFunc.is_var_declare_param(name);
+    if (pos != -1)
+      checkParam = symTab.get(definingFunc.paramTab, pos);
+    else {
+      pos = definingFunc.is_var_declare_var(name);
+      if (pos != -1)
+        checkParam = symTab.get(definingFunc.varTab, pos);
+      else {
+        pos = symTab.is_globalVar_declare(name);
+        if (pos != -1)
+          checkParam = symTab.get(symTab.globalVarTab, pos);
+        else
+          errorHandler.error(loc, "Variable " + name + " is not defined in function " + definingFunc.name);
+          return name;
+      }
+    }
+    if (index < function.getParamNum()){
+	    checkRes = symTab.checkCallType(checkParam, symTab.get(function.paramTab, index));
+	    if (checkRes == 2)
+	      errorHandler.error(loc, "Parameter " + name + " type is wrong in function " + function.name);
+	    else if(checkRes == 1)
+	      errorHandler.warning(loc, "Loss will occur while using " + name + " as a parameter in function " + function.name);
+    }
+    return name;
+	}
+	| constant(checkParam)
+	{
+		if (index < function.getParamNum()){
+		  checkRes = symTab.checkCallType(checkParam, symTab.get(function.paramTab, index));
+		  if(checkRes == 2)
+	      errorHandler.error(loc, "Parameter " + checkParam.name + " type is wrong in function " + function.name);
+		  else if(checkRes == 1)
+		    errorHandler.warning(loc, "Loss will occur while using " + checkParam.name + " as parameter in function " + function.name);
+	  }
+	  return checkParam.name;
+	}
+	)
+}
+
+
+//expression
+VariableType expr() throws Exception:
+{
+	VariableType var = null;
+}
+{
+  var = assign_expr() ("," assign_expr())*
+  {
+		return var;
+    System.out.print("\t\t\tExpression\n");
+  }
+}
+
+
+//Assignment Expression
+VariableType assign_expr() throws Exception:
+{
+	boolean isCompound = false;
+	VariableType var, rhs;
+	String ope = "";
+}
+
+{
+  (
+    LOOKAHEAD(unary_expr()assign_operator()) var = unary_expr() ope = assign_operator()
+    {
+    }
+
+    rhs = assign_expr()
+    {
+      if (var.isConst){
+        errorHandler.error(loc, "Const Value " + rhs.name + " cannot be assigned");
+        return var;
+      }
+      if(rhs != null){
+	      if(rhs.isConst)
+	        var.value = rhs.name + "";
+	      else if (rhs != null && rhs.value == null)
+	        errorHandler.error(loc, "Variable " + rhs.name + " is not initialized in function " + definingFunc.name);
+	      else if(ope.equals("-=") && rhs != null && rhs.value.equals("0")){
+	        errorHandler.error(loc, "Variable " + var.name + " is dividing zero");
+	        isCompound = true;
+	      }
+	      else
+	        var.value = rhs.value;
+	      if(ope.equals("&=") || ope.equals("|=") || ope.equals("^=") || ope.equals("<<=") || ope.equals(">>=")|| ope.equals("%=")){
+	        if(!symTab.checkCalculateType(var.type, rhs.type)){
+	          errorHandler.error(loc, "Variable " + var.name + " or Variable " + var.name + " cannot be calculated with &, |, ^, <<, >>, %");
+	        }
+	        isCompound = true;
+	      }
+	      else if(ope.equals("+=") || ope.equals("-=") || ope.equals("*="))
+	        isCompound = true;
+	      if(var.isPointer){
+	        if(!rhs.type.equals("int") && !rhs.isPointer )
+	          errorHandler.error(loc, "Must be an integer while calculating pointer" + var.name);
+	        if(isCompound)
+	        {
+	          pr_ir.write("\tt" + i + "=" + arr[top - 1] + "*" + var.size + "\n");
+	          arr[top - 1] = "t" + i ++;
+	        }
+	      }
+	      if (rhs != null){
+		      int res = symTab.checkAssignType(var.type, rhs.type);
+		      if(res == 2)
+		        errorHandler.error(loc,  rhs.name + " cannot be assigned to Variable " + var.name);
+					if(res == 1)
+						errorHandler.warning(loc, "Loss will occur while assigning " + rhs.name + " to Variable "	+ var.name);
+	      }
+        var_assign();
+      }
+    }
+
+    |LOOKAHEAD(3) var = cond_expr()
+  )
+  {
+    return var;
+    System.out.print("\t\t\tAssignment expression\n");
+  }
+}
+
+//Assignment operator
+String assign_operator():
+{
+  Token t = null;
+}
+
+{
+  (
+		t = "="
+    {
+      arr[top++] = t.image;
+    }|t = "*="
+    {
+      arr[top++] = "=" + arr[top - 2] + "*";
+    }|t = "/="
+    {
+      arr[top++] = "=" + arr[top - 2] + "/";
+    }|t = "%="
+    {
+      arr[top++] = "=" + arr[top - 2] + "%";
+    }|t = "+="
+    {
+      arr[top++] = "=" + arr[top - 2] + "+";
+    }|t = "-="
+    {
+      arr[top++] = "=" + arr[top - 2] + "-";
+    }|t = "<<="
+    {
+      arr[top++] = "=" + arr[top - 2] + "<< ";
+    }|t = ">>="
+    {
+      arr[top++] = "=" + arr[top - 2] + ">>";
+    }|t = "&="
+    {
+      arr[top++] = "=" + arr[top - 2] + "&";
+    }|t = "^="
+    {
+      arr[top++] = "=" + arr[top - 2] + "^";
+    }|t = "|="
+    {
+      arr[top++] = "=" + arr[top - 2] + "|";
+    }
+  )
+  {
+    jjtThis.setText((" value: "+t.image));
+    System.out.print("\t\t\tAssignment operator\n");
+    return t.image;
+  }
+}
+
+//Unary expression
+VariableType unary_expr() throws Exception:
+{
+  Token t = null;
+  VariableType var = null;
+}
+
+{
+  (
+	LOOKAHEAD(3) var = postfix_expr()
+	| t = "++"
+		{
+	    if(t!=null)
+	      jjtThis.setText((" value: "+t.image));
+	  }
+	  var = unary_expr()
+	  {
+	  String t1 = arr[top - 1];
+	  if (var.isPointer)
+	    arr[top++] = "+" + var.size;
+	  else {
+	    if(!var.isIntorChar())
+	      errorHandler.error(loc, "Variable " + var.name + " cannot be calculated with " + "++");
+      arr[top ++] = "+" + 1;
+	  }
+	    u_assign();
+	    assign_var(t1);
+		}
+	|t = "--" var = unary_expr()
+	{
+	  jjtThis.setText((" value: "+t.image));
+    t1 = arr[top - 1];
+    if (var.isPointer)
+      arr[top++] = "-" + var.size;
+    else{
+      arr[top ++] = "-" + 1;
+      if(!var.isIntorChar())
+        errorHandler.error(loc, "Variable " + var.name + " cannot be calculated with " + "--");
+    }
+    u_assign();
+    assign_var(t1);
+	}
+	|t = "-"
+	{
+	  jjtThis.setText((" value: "+t.image));
+      arr[top++] = "-";
+	}
+  var = unary_expr()
+  {
+    t1 = arr[top - 1];
+    u_assign();
+	}
+	|t = "&" var = unary_expr()
+	{
+	  jjtThis.setText((" value: "+t.image));
+    t1 = arr[top - 1];
+    address();
+    if(!var.isIntorChar())
+      errorHandler.error(loc, "Variable " + var.name + " cannot be calculated with " + "&");
+	}
+	|t = "*" var = unary_expr()
+	{
+	  jjtThis.setText((" value: "+t.image));
+    t1 = arr[top - 1];
+    mem();
+	}
+	|t = "~"
+	{
+	  jjtThis.setText((" value: "+t.image));
+      arr[top++] = "~";
+	}
+  var = unary_expr()
+  {
+    t1 = arr[top - 1];
+    u_assign();
+    if(!var.isIntorChar())
+      errorHandler.error(loc, "Variable " + var.name + " cannot be calculated with " + "&");
+	}
+	|t = "!"
+	{
+	  jjtThis.setText((" value: "+t.image));
+      arr[top++] = "!";
+	}
+  var = unary_expr()
+  {
+    t1 = arr[top - 1];
+    u_assign();
+	}
+  )
+  {
+    return var;
+    System.out.println("\t\t\tUnary expression ");
+  }
+}
+
+
+//Postfix expression
+VariableType postfix_expr() throws Exception:
+{
+  Token t = null;
+  VariableType var = null;
+  VariableType numVar;
+}
+
+{
+  (
+	  var = prefix_expr()
+	  ("[" numVar = expr() "]"
+	  {
+	    if(!var.isArray)
+	    	errorHandler.error(loc, "Variable " + var.name + " is not an array and cannot be calculated with '[]'");
+	    else if(!numVar.type.equals("int"))
+	      errorHandler.error(loc, var.name + "is not an Integer and cannot be used as an index");
+	    pr_ir.write("\tt" + i + "=" + arr[top - 1] + "*" + numVar.size + "\n");
+	    arr[top - 1] = "+t" + i ++ ;
+	    u_assign();
+	    mem();
+	  }
+	  |t = "++"
+	  {
+	    jjtThis.setText((" value: "+t.image));
+	    arr[top++] = "";
+	    String t1 = arr[top - 2];
+	    u_assign();
+	    if(var.isPointer)
+	      pr_ir.write("\t" + t1 + "=" + t1 + "+" + var.size + "\n");
+	    else if(!var.isIntorChar()){
+	      errorHandler.error(loc, var.name + "is not an Integer or Charater and cannot be calculated with '++'");
+	      pr_ir.write("\t" + t1 + "=" + t1 + "+" + 1 + "\n");
+	    }
+	    else
+	      pr_ir.write("\t" + t1 + "=" + t1 + "+" + 1 + "\n");
+	  }
+    |t = "--"
+    {
+		jjtThis.setText((" value: "+t.image));
+    arr[top++] = "";
+    t1 = arr[top - 2];
+    u_assign();
+    if(var.isPointer)
+      pr_ir.write("\t" + t1 + "=" + t1 + "-" + var.size + "\n");
+    else if(!var.isIntorChar()){
+      errorHandler.error(loc, var.name + "is not an Integer or Charater and cannot be calculated with '++'");
+      pr_ir.write("\t" + t1 + "=" + t1 + "-" + 1 + "\n");
+    }
+    else
+      pr_ir.write("\t" + t1 + "=" + t1 + "-" + 1 + "\n");
+    })*
+  )
+  {
+    return var;
+    System.out.print("\t\t\tPostfix expression\n");
+  }
+}
+
+//prefix expression
+VariableType prefix_expr() throws Exception:
+{
+  Token t;
+  VariableType var = new VariableType();
+  String name;
+}
+
+{
+  (
+    LOOKAHEAD(2) funcall_stmt(var)
+    {
+      if (var.name == null)
+        return null;
+      else
+        return var;
+      System.out.print("\t\t\tCall function\n");
+    }
+    |name = name()
+    {
+      jjtThis.setText((" name: " + name));
+      int pos = definingFunc.is_var_declare_param(name);
+      if (pos != -1)
+        var = symTab.get(definingFunc.paramTab, pos);
+      else {
+	        pos = definingFunc.is_var_declare_var(name);
+		      if (pos != -1)
+		        var = symTab.get(definingFunc.varTab, pos);
+		      else {
+		        pos = symTab.is_globalVar_declare(name);
+		        if (pos != -1)
+		          var = symTab.get(symTab.globalVarTab, pos);
+		        else{
+		          errorHandler.error(loc, "Variable " + name + " is not defined in function " + definingFunc.name);
+		           var = null;
+		        }
+		      }
+		  }
+      arr[top++] = name;
+    }
+    |constant(var)
+    |"(" var = expr() ")"
+    )
+    {
+      return var;
+      System.out.print("\t\t\tPrimary expression\n");
+    }
+}
+
+//conditional expression
+VariableType cond_expr() throws Exception:
+{
+	VariableType var = null;
+}
+
+{
+  var = logical_or_expr()
+  {
+    return var; 
+    System.out.print("\t\t\tConditional expression\n");
+  }
+}
+
+//logical or expression
+VariableType logical_or_expr() throws Exception:
+{
+  Token t = null;
+  VariableType var = null;
+}
+
+{
+  var = logical_and_expr()[
+  t = "||"
+  {
+    jjtThis.setText((" value: "+t.image));
+    arr[top++] = t.image;
+    VariableType rhs;
+  }
+  rhs = logical_or_expr()
+  {    
+    System.out.print("\t\t\tLogical OR expression\n");
+    assign();
+  }
+  ]
+  {
+    return var;
+  }
+}
+
+
+//logical and expression
+VariableType logical_and_expr() throws Exception:
+{
+  Token t = null;
+  VariableType var = null;
+}
+
+{
+  var = Inclusive_or_expr()[
+  t = "&&"
+  {
+    jjtThis.setText((" value: "+t.image));
+    arr[top++] = t.image;
+    VariableType rhs;
+  }
+  rhs = logical_and_expr()
+  {
+    System.out.print("\t\t\tLogical And expression\n");
+    assign();
+  }
+  ]
+  {
+    return var;
+  }
+}
+
+//Inclusive Or expression
+VariableType Inclusive_or_expr() throws Exception:
+{
+  Token t = null;
+  VariableType var = null;
+}
+
+{
+  var = exclusive_or_expr()[
+  t = "|"
+  {
+    jjtThis.setText((" value: "+t.image));
+    arr[top++] = t.image;
+    VariableType rhs;
+  }
+  rhs = Inclusive_or_expr()
+  {
+    if(!symTab.checkCalculateType(var.type, rhs.type))
+      errorHandler.error(loc, "Variable " + var.name + " or Variable " + rhs.name + " cannot be used in calculation '|' ");          
+    System.out.print("\t\t\tInclusive OR expression\n");
+    assign();
+  }
+  ]
+  {
+    return var;
+  }
+}
+
+//Exclusive Or expression
+VariableType exclusive_or_expr() throws Exception:
+{
+  Token t = null;
+  VariableType var = null;
+}
+
+{
+  var = and_expr()
+  [t = "^" 
+  {
+    jjtThis.setText((" value: "+t.image));
+    arr[top++] = t.image;
+    VariableType rhs;
+	}
+  rhs = exclusive_or_expr()
+  {
+    if(!symTab.checkCalculateType(var.type, rhs.type))
+      errorHandler.error(loc, "Variable " + var.name + " or Variable " + rhs.name + " cannot be used in calculation '^' "); 
+    System.out.print("\t\t\tExclusive OR expression\n");
+    assign();
+  }
+  ]
+  {
+    return var;
+  }
+}
+
+//And expression
+ VariableType and_expr() throws Exception:
+{
+  Token t = null;
+  VariableType var = null;
+}
+
+{
+  var = equal_expr()[
+  t = "&"
+  {
+    jjtThis.setText((" value: "+t.image));
+    arr[top++] = t.image;
+    VariableType rhs;
+  }
+  rhs = and_expr()
+  {
+    if(!symTab.checkCalculateType(var.type, rhs.type))
+      errorHandler.error(loc, "Variable " + var.name + " or Variable " + rhs.name + " cannot be used in calculation '&' "); 
+    System.out.print("\t\t\tAnd expression\n");
+    assign();
+  }
+  ]
+  {
+    return var;
+  }
+}
+
+//equality expression
+VariableType equal_expr() throws Exception:
+{
+  Token t = null;
+  VariableType var = null;
+}
+
+{
+  var = relation_expr()[
+  (t = "==" | t = "!=")
+  {
+    jjtThis.setText((" value: "+t.image));
+    arr[top++] = t.image;    
+  }
+  equal_expr()
+  {
+    System.out.print("\t\t\tEquality expression\n");
+    assign();
+  }
+  ]
+  {
+    return var;
+  }
+}
+
+//Relational expression
+VariableType relation_expr() throws Exception:
+{
+    Token t = null;
+    VariableType var = null;
+}
+
+{
+  var = shift_expr()[
+  (t = "<" | t = ">" | t = "<=" | t = ">=")
+  {
+    jjtThis.setText((" value: "+t.image));
+    arr[top++] = t.image;
+    VariableType rhs;
+  }
+  relation_expr()
+  {
+    System.out.print("\t\t\tRelational expression\n");
+    assign();
+  }
+  ]
+  {
+    return var;
+  }
+}
+
+//shift expression
+VariableType shift_expr() throws Exception:
+{
+  Token t = null;
+  VariableType var = null;
+}
+{
+  var = additive_expr()[
+  (t = "<<" | t = ">>")
+  {
+    jjtThis.setText((" value: "+t.image));
+    arr[top++] = t.image;
+    VariableType rhs;
+  }
+  rhs = shift_expr()  
+  {
+    if(!symTab.checkCalculateType(var.type, rhs.type))
+       errorHandler.error(loc, "Variable " + var.name + " or Variable " + rhs.name + " cannot be used in calculation '>>' and '<<' "); 
+    System.out.print("\t\t\tShift expression\n");
+    assign();
+  }
+  ]
+  {
+    return var;
+  }
+}
+
+//additive expression
+VariableType additive_expr() throws Exception:
+{
+  Token t = null;
+  boolean pointerFirst;
+  VariableType var = null;
+}
+{
+   var = multiplicative_expr()
+   {
+         
+   }
+   [
+   (t = "+" | t = "-")
+   {
+   jjtThis.setText((" value: "+t.image));
+      arr[top++] = t.image;
+      VariableType rhs;
+   }
+   rhs = additive_expr()
+   {
+	 System.out.print("\t\t\tMultiplicative expression \n");
+     /* ptr + num */
+     if(var.isPointer)
+     {
+       if(!rhs.type.equals("int"))
+         errorHandler.error(loc, rhs.name + " cannot be calculated with pointer variable " + var.name);
+       pr_ir.write("\tt" + i + "=" + arr[top - 1] + "*" + rhs.size + "\n");
+       arr[top - 1] = "t" + i++;
+       assign();
+     }
+     /* num + ptr */
+     else if(rhs.isPointer)
+     {
+       if(!var.type.equals("int"))
+         errorHandler.error(loc, var.name + " cannot be calculated with pointer variable " + rhs.name);
+       pr_ir.write("\tt" + i + "=" + arr[top - 1] + "*" + var.size + "\n");
+       arr[top - 3] = "t" + i ++;
+       assign();
+     }
+     else
+     {
+       assign();
+     }
+   }]
+   {
+      return var;
+   }
+}
+
+VariableType multiplicative_expr() throws Exception:
+{
+  Token t = null;
+  VariableType var = null;
+}
+{
+    var = unary_expr()[
+    (t = "*" | t = "/" | t = "%")
+    {
+      jjtThis.setText((" value: "+t.image));
+      arr[top++] = t.image;
+      VariableType rhs;
+    }
+    rhs = multiplicative_expr()
+    {
+      if (t.image.equals("%")){
+        if(!symTab.checkCalculateType(var.type, rhs.type))
+          errorHandler.error(loc, "Variable " + var.name + " or Variable " + rhs.name + " cannot be used in calculation '%' ");
+      }
+      System.out.print("\t\t\tMultiplicative expression \n");
+      assign();
+    }
+    ]
+    {
+      return var;
+    }
+}
+
+//常量
+void constant(VariableType var):
+{
+    Token t = null;
+}
+
+{
+    ((t = < INTEGER_LITERAL > )
+    {
+      jjtThis.setText((" value: "+t.image));
+      var.type = "int";
+      var.size = 4;
+      System.out.print("\t\t\tConstant " + t.image + "\n");
+    }
+    |(t = <CHARACTER_LITERAL>)
+    {
+      jjtThis.setText((" value: "+t.image));
+      var.type = "char";
+      var.size = 1;
+      System.out.print("\t\t\tConstant " + t.image + "\n");
+    }
+    |(t =<FLOATING_POINT_LITERAL >)
+    {
+      jjtThis.setText((" value: "+t.image));
+      var.type = "float";
+      var.size = 4;
+      System.out.print("\t\t\tConstant " + t.image + "\n");
+    }
+    |(t =<STRING_LITERAL >)
+    {
+      jjtThis.setText((" value: "+t.image));
+      var.type = "char";
+      var.isPointer = true;
+      System.out.print("\t\t\tConstant " + t.image + "\n");
+    })
+    {
+      arr[top++] = t.image;
+      var.name = t.image;
+      loc = t.beginLine;
+      var.isConst = true;
+    }
+}
+
+    // 非终端符号name和<IDENTIFIER>是相同的
+// 将Token对象赋给了临时变量tok，并且返回tok中image属性的值作为name()的语义值
+String name():
+{
+  Token t;
+}
+{
+  t =<IDENTIFIER > {
+    jjtThis.setText((" name: "+t.image));
+    loc = t.beginLine;
+    return t.image;
+  }
+}
